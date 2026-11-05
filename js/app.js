@@ -19,11 +19,20 @@
   };
   function showLogin(msg) {
     const c = SC.db.config;
-    root().innerHTML = `<div class="login"><div class="login-card"><div class="brand"><div class="brand-mark">${c.logo ? `<img src="${c.logo}" alt="">` : 'SC'}</div><div><b>${esc(c.nomeFantasia)}</b><small>Sistema de gestão · Assistência técnica</small></div></div>
+    const isDark = (document.documentElement.getAttribute('data-theme') || SC.getTheme()) === 'dark';
+    root().innerHTML = `<div class="login">
+      <div class="login-topbar">
+        <button type="button" class="btn ghost theme-toggle-btn" data-theme-btn data-size="16" data-label="1" title="${isDark ? 'Alternar para Modo Claro' : 'Alternar para Modo Escuro'}" aria-label="Alternar tema">
+          ${icon(isDark ? 'sun' : 'moon', 16)} <span>${isDark ? 'Modo Claro' : 'Modo Escuro'}</span>
+        </button>
+      </div>
+      <div class="login-card"><div class="brand"><div class="brand-mark">${c.logo ? `<img src="${c.logo}" alt="">` : 'SC'}</div><div><b>${esc(c.nomeFantasia)}</b><small>Sistema de gestão · Assistência técnica</small></div></div>
       <form id="lf" autocomplete="on">${msg ? `<div class="login-err" role="alert">${esc(msg)}</div>` : ''}
       <label class="f"><span>Usuário</span><input name="login" autocomplete="username" autocapitalize="none" autofocus></label>
       <label class="f"><span>Senha</span><input name="senha" type="password" autocomplete="current-password"></label>
       <button class="btn primary" type="submit" style="padding:11px">Entrar</button></form></div></div>`;
+    const themeBtn = root().querySelector('[data-theme-btn]');
+    if (themeBtn) themeBtn.onclick = () => SC.toggleTheme();
     root().querySelector('#lf').addEventListener('submit', e => {
       e.preventDefault();
       const v = SC.vals(e.target), u = SC.db.users.find(x => x.login === v.login.trim().toLowerCase() && x.senha === SC.hash(v.senha));
@@ -53,14 +62,20 @@
   SC.renderShell = () => {
     const c = SC.db.config, u = SC.user;
     const ini = u.nome.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    const isDark = (document.documentElement.getAttribute('data-theme') || SC.getTheme()) === 'dark';
     root().innerHTML = `<div class="app">
       <aside class="side" id="side"><div class="brand"><div class="brand-mark">${c.logo ? `<img src="${c.logo}" alt="">` : 'SC'}</div><div><b>${esc(c.nomeFantasia)}</b><small>Assistência técnica</small></div></div>
         <nav class="nav" aria-label="Menu principal">${NAV.map(n => n.g ? (NAV.slice(NAV.indexOf(n) + 1).some(x => SC.can(x.k)) ? `<h6>${n.g}</h6>` : '') : (SC.can(n.k) ? `<a data-nav="${n.k}" tabindex="0" role="link">${icon(n.i)} ${n.n}</a>` : '')).join('')}</nav>
         <div class="side-foot"><div>SmartCenter · v1.0</div><small class="db-pill ${SC.storage.isSQLite ? 'pill-sqlite' : 'pill-local'}" title="${SC.storage.isSQLite ? 'Conectado ao arquivo smartcenter.db' : 'Dados salvos no navegador'}">${SC.storage.isSQLite ? '🟢 SQLite Ativo' : '💾 Banco Local'}</small></div></aside><div class="scrim" id="scrim"></div>
       <div class="main"><header class="top"><button class="btn ghost icon menu-btn" id="menu" aria-label="Abrir menu">${icon('menu')}</button>
         <div class="gsearch">${icon('search', 16)}<input type="search" id="gs" placeholder="Pesquisa rápida: OS, cliente, IMEI, produto… (tecla /)" autocomplete="off"><div class="gs-list" id="gsl" hidden></div></div><div class="spacer"></div>
+        <button type="button" class="btn ghost icon theme-btn" data-theme-btn data-size="18" title="${isDark ? 'Alternar para Modo Claro' : 'Alternar para Modo Escuro'}" aria-label="Alternar tema">${icon(isDark ? 'sun' : 'moon', 18)}</button>
         <div class="usermenu"><button class="ubtn" id="ubtn" aria-haspopup="true"><span class="avatar">${esc(ini)}</span><span><b>${esc(u.nome)}</b><small>${esc((SC.PERFIS[u.perfil] || {}).nome || '')}</small></span></button>
-          <div class="umenu" id="umenu" hidden><button data-pass>${icon('key', 16)} Alterar senha</button><button data-out>${icon('logout', 16)} Sair</button></div></div></header>
+          <div class="umenu" id="umenu" hidden>
+            <button data-theme-toggle>${icon(isDark ? 'sun' : 'moon', 16)} <span class="theme-menu-text">${isDark ? 'Modo Claro' : 'Modo Escuro'}</span></button>
+            <button data-pass>${icon('key', 16)} Alterar senha</button>
+            <button data-out>${icon('logout', 16)} Sair</button>
+          </div></div></header>
         ${SC.storage.ok ? '' : '<div class="banner" role="alert">O navegador não está permitindo salvar dados (modo privado ou armazenamento bloqueado). Faça backup antes de fechar esta aba.</div>'}
         <main id="view"></main></div></div>`;
     const r = root();
@@ -72,7 +87,14 @@
     side.addEventListener('click', e => { if (e.target.closest('[data-nav]')) tog(false); });
     const um = r.querySelector('#umenu');
     r.querySelector('#ubtn').onclick = e => { e.stopPropagation(); um.hidden = !um.hidden; };
-    um.addEventListener('click', e => { um.hidden = true; if (e.target.closest('[data-out]')) SC.logout(); if (e.target.closest('[data-pass]')) SC.changePassword(); });
+    const themeBtn = r.querySelector('.theme-btn');
+    if (themeBtn) themeBtn.onclick = () => SC.toggleTheme();
+    um.addEventListener('click', e => {
+      um.hidden = true;
+      if (e.target.closest('[data-theme-toggle]')) SC.toggleTheme();
+      if (e.target.closest('[data-out]')) SC.logout();
+      if (e.target.closest('[data-pass]')) SC.changePassword();
+    });
     document.addEventListener('click', () => { const x = document.getElementById('umenu'); if (x) x.hidden = true; });
     bindSearch(r);
     if (current) mark();

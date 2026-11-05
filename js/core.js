@@ -313,6 +313,25 @@
     return r;
   };
 
+  /* ---------- Tema (Dark / Light) ---------- */
+  SC.getTheme = () => localStorage.getItem('sc_theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  SC.setTheme = t => {
+    try { localStorage.setItem('sc_theme', t); } catch (e) {}
+    document.documentElement.setAttribute('data-theme', t);
+    document.body.classList.toggle('dark-mode', t === 'dark');
+    document.querySelectorAll('[data-theme-btn]').forEach(b => {
+      const isDark = t === 'dark';
+      const sz = b.dataset.size ? Number(b.dataset.size) : 18;
+      b.innerHTML = (SC.icon ? SC.icon(isDark ? 'sun' : 'moon', sz) : '') + (b.dataset.label ? ` <span>${isDark ? 'Modo Claro' : 'Modo Escuro'}</span>` : '');
+      b.title = isDark ? 'Alternar para Modo Claro' : 'Alternar para Modo Escuro';
+      b.setAttribute('aria-label', isDark ? 'Alternar para Modo Claro' : 'Alternar para Modo Escuro');
+    });
+  };
+  SC.toggleTheme = () => {
+    const cur = document.documentElement.getAttribute('data-theme') || SC.getTheme();
+    SC.setTheme(cur === 'dark' ? 'light' : 'dark');
+  };
+
   /* Dados de demonstração (apenas adiciona) */
   SC.loadDemo = () => {
     const d = SC.db, t = SC.today();

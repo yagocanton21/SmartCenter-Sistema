@@ -32,7 +32,9 @@
     chat: 'M4 5h16v11H9l-5 4z',
     arrow: 'M5 12h14 M13 6l6 6-6 6',
     chart: 'M4 20V10 M10 20V4 M16 20v-7 M22 20H2',
-    key: 'M14 10a4 4 0 1 0-3.9 4L11 15l1 1 1 .2.2 1 1 .8h2.3l1.7-1.7V13.6L20 11z'
+    key: 'M14 10a4 4 0 1 0-3.9 4L11 15l1 1 1 .2.2 1 1 .8h2.3l1.7-1.7V13.6L20 11z',
+    sun: 'M12 3v1 M12 20v1 M4.22 4.22l.71.71 M18.36 18.36l.71.71 M1 12h1 M21 12h1 M4.22 19.78l.71-.71 M18.36 5.64l.71-.71 M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10z',
+    moon: 'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z'
   };
   SC.icon = (n, s = 18) => `<svg class="ic" viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${IC[n] || ''}"/></svg>`;
   const icon = SC.icon;
