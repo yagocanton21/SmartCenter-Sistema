@@ -68,9 +68,9 @@
         <nav class="nav" aria-label="Menu principal">${NAV.map(n => n.g ? (NAV.slice(NAV.indexOf(n) + 1).some(x => SC.can(x.k)) ? `<h6>${n.g}</h6>` : '') : (SC.can(n.k) ? `<a data-nav="${n.k}" tabindex="0" role="link">${icon(n.i)} ${n.n}</a>` : '')).join('')}</nav>
         <div class="side-foot"><div>SmartCenter · v1.0</div><small class="db-pill ${SC.storage.isSQLite ? 'pill-sqlite' : 'pill-local'}" title="${SC.storage.isSQLite ? 'Conectado ao arquivo smartcenter.db' : 'Dados salvos no navegador'}">${SC.storage.isSQLite ? '🟢 SQLite Ativo' : '💾 Banco Local'}</small></div></aside><div class="scrim" id="scrim"></div>
       <div class="main"><header class="top"><button class="btn ghost icon menu-btn" id="menu" aria-label="Abrir menu">${icon('menu')}</button>
-        <div class="gsearch">${icon('search', 16)}<input type="search" id="gs" placeholder="Pesquisa rápida: OS, cliente, IMEI, produto… (tecla /)" autocomplete="off"><div class="gs-list" id="gsl" hidden></div></div><div class="spacer"></div>
+        <div class="gsearch">${icon('search', 16)}<input type="search" id="gs" placeholder="Buscar…" autocomplete="off"><div class="gs-list" id="gsl" hidden></div></div><div class="spacer"></div>
         <button type="button" class="btn ghost icon theme-btn" data-theme-btn data-size="18" title="${isDark ? 'Alternar para Modo Claro' : 'Alternar para Modo Escuro'}" aria-label="Alternar tema">${icon(isDark ? 'sun' : 'moon', 18)}</button>
-        <div class="usermenu"><button class="ubtn" id="ubtn" aria-haspopup="true"><span class="avatar">${esc(ini)}</span><span><b>${esc(u.nome)}</b><small>${esc((SC.PERFIS[u.perfil] || {}).nome || '')}</small></span></button>
+        <div class="usermenu"><button class="ubtn" id="ubtn" aria-haspopup="true" title="Perfil: ${esc(u.nome)}" aria-label="Menu do usuário"><span class="avatar">${icon('user', 16)}</span><span class="uinfo"><b>${esc(u.nome)}</b><small>${esc((SC.PERFIS[u.perfil] || {}).nome || '')}</small></span></button>
           <div class="umenu" id="umenu" hidden>
             <button data-theme-toggle>${icon(isDark ? 'sun' : 'moon', 16)} <span class="theme-menu-text">${isDark ? 'Modo Claro' : 'Modo Escuro'}</span></button>
             <button data-pass>${icon('key', 16)} Alterar senha</button>
@@ -128,6 +128,9 @@
   /* ---------- Busca global ---------- */
   function bindSearch(r) {
     const inp = r.querySelector('#gs'), box = r.querySelector('#gsl');
+    const updatePh = () => { if (inp) inp.placeholder = window.innerWidth <= 768 ? 'Buscar…' : 'Buscar OS, cliente, produto… (/)'; };
+    updatePh();
+    window.addEventListener('resize', SC.debounce(updatePh, 150));
     const run = () => {
       const q = SC.norm(inp.value).trim(), qd = SC.digits(inp.value);
       if (q.length < 2) { box.hidden = true; return; }
