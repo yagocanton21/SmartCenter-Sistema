@@ -18,11 +18,14 @@
     if (u) { SC.user = u; SC.renderShell(); route(); } else showLogin();
   };
   function showLogin(msg) {
+    if (location.hash) {
+      try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { location.hash = ''; }
+    }
     const c = SC.db.config;
     const isDark = (document.documentElement.getAttribute('data-theme') || SC.getTheme()) === 'dark';
     root().innerHTML = `<div class="login">
       <div class="login-topbar">
-        <button type="button" class="btn ghost theme-toggle-btn" data-theme-btn data-size="16" data-label="1" title="${isDark ? 'Alternar para Modo Claro' : 'Alternar para Modo Escuro'}" aria-label="Alternar tema">
+        <button type="button" class="theme-toggle-btn" data-theme-btn data-size="16" data-label="1" title="${isDark ? 'Alternar para Modo Claro' : 'Alternar para Modo Escuro'}" aria-label="Alternar tema">
           ${icon(isDark ? 'sun' : 'moon', 16)} <span>${isDark ? 'Modo Claro' : 'Modo Escuro'}</span>
         </button>
       </div>
@@ -41,7 +44,13 @@
       SC.session.set(u.id); SC.user = u; SC.log('sistema', 'Login realizado'); SC.save(); SC.renderShell(); route();
     });
   }
-  SC.logout = () => { SC.session.set(null); SC.user = null; current = null; showLogin(); };
+  SC.logout = () => {
+    SC.session.set(null);
+    SC.user = null;
+    current = null;
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { location.hash = ''; }
+    showLogin();
+  };
 
   SC.changePassword = () => {
     const m = SC.modal({
