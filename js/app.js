@@ -23,8 +23,7 @@
       <form id="lf" autocomplete="on">${msg ? `<div class="login-err" role="alert">${esc(msg)}</div>` : ''}
       <label class="f"><span>Usuário</span><input name="login" autocomplete="username" autocapitalize="none" autofocus></label>
       <label class="f"><span>Senha</span><input name="senha" type="password" autocomplete="current-password"></label>
-      <button class="btn primary" type="submit" style="padding:11px">Entrar</button>
-      ${SC.db.users.length === 1 && SC.db.users[0].senha === SC.hash('admin') ? '<p class="hint" style="margin:0;text-align:center">Primeiro acesso: usuário <b>admin</b> e senha <b>admin</b>.</p>' : ''}</form></div></div>`;
+      <button class="btn primary" type="submit" style="padding:11px">Entrar</button></form></div></div>`;
     root().querySelector('#lf').addEventListener('submit', e => {
       e.preventDefault();
       const v = SC.vals(e.target), u = SC.db.users.find(x => x.login === v.login.trim().toLowerCase() && x.senha === SC.hash(v.senha));
