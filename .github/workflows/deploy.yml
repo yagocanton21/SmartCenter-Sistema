@@ -1,0 +1,60 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: 🧪 Executar Testes Automatizados
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 22 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Executar testes de concorrência e idempotência
+        run: npm test
+
+  deploy:
+    name: 🚀 Deploy Automático na VPS3
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH na VPS3
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -e
+            APP_DIR="/home/ubuntu/smartcenter-sistema"
+
+            if [ ! -d "$APP_DIR" ]; then
+              echo "Clonando repositório na VPS3..."
+              git clone https://github.com/${{ github.repository }}.git "$APP_DIR"
+              cd "$APP_DIR"
+            else
+              echo "Atualizando repositório na VPS3..."
+              cd "$APP_DIR"
+              git fetch --all
+              git reset --hard origin/main
+            fi
+
+            echo "Construindo e iniciando container Docker na porta 8093..."
+            docker compose up -d --build --remove-orphans
+
+            echo "Aguardando inicialização..."
+            sleep 4
+            docker compose ps
+            echo "Deploy concluído com sucesso!"

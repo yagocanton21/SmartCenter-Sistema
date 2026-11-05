@@ -1,0 +1,17 @@
+services:
+  smartcenter:
+    build: .
+    container_name: smartcenter-app
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8093}:3000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - TZ=America/Sao_Paulo
+      - PORT=3000
+      - DB_PATH=/app/data/smartcenter.db
+    deploy:
+      resources:
+        limits:
+          memory: 350M

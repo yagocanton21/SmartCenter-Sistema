@@ -1,0 +1,44 @@
+SMARTCENTER - SISTEMA DE GESTÃO PARA ASSISTÊNCIA TÉCNICA
+Versão 1.3 · Com Docker, SQLite nativo e proteção de Idempotência
+
+========================================================================
+COMO SUBIR NA SUA VPS (DOCKER / DOCKER COMPOSE)
+========================================================================
+
+Ideal para deixar o sistema online 24/7 para seu pai poder acessar de
+qualquer computador, celular ou tablet pela internet!
+
+1. Na sua VPS (Ubuntu/Debian com Docker instalado), envie os arquivos do sistema.
+2. Dentro da pasta do projeto, execute:
+   docker compose up -d --build
+
+3. Pronto! O sistema já estará rodando em segundo plano.
+   - Para acessar: http://IP_DA_SUA_VPS:3000
+   - Reinício automático: se a VPS reiniciar, o container sobe sozinho (restart: unless-stopped).
+   - Persistência dos dados: o banco SQLite fica salvo na pasta local "./data" da VPS.
+   - Fazer backup na VPS: basta copiar o arquivo "./data/smartcenter.db".
+
+Para parar ou reiniciar:
+   docker compose restart
+   docker compose down
+
+========================================================================
+COMO USAR NO COMPUTADOR LOCAL (WINDOWS)
+========================================================================
+
+OPÇÃO 1: COM BANCO DE DADOS SQLITE (RECOMENDADO PARA REDE LOCAL)
+1. Dê dois cliques no arquivo "iniciar.bat".
+2. O servidor iniciará o banco SQLite e abrirá o navegador em http://localhost:3000.
+3. Para usar em outros aparelhos da loja (mesmo Wi-Fi), acesse o IP exibido no terminal.
+
+OPÇÃO 2: MODO NAVEGADOR (SEM SERVIDOR)
+- Dê dois cliques em "index.html".
+- Os dados ficam salvos no navegador (localStorage).
+
+========================================================================
+PRIMEIRO ACESSO E CONFIGURAÇÕES
+========================================================================
+- Usuário inicial: admin
+- Senha inicial: admin
+- Troque a senha no menu do usuário após o primeiro acesso.
+- Em "Configurações da loja", cadastre o nome, telefone, endereço e logotipo.
