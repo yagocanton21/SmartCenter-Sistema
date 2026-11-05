@@ -35,8 +35,6 @@
       if (!SC.db.config.cnpj && !SC.db.config.endereco && SC.can('config')) al.push(`<div class="alert">${icon('settings', 18)}<span>Cadastre os dados da loja para que apareçam nos documentos impressos.</span><button class="btn sm" data-go="config" data-filter="">Configurar</button></div>`);
       if (!al.length) al.push(`<div class="alert ok">${icon('check', 18)}<span>Tudo em ordem. Nenhum alerta no momento.</span></div>`);
 
-      const feed = db.log.slice(0, 10).map(l => `<li><span class="dot">${icon(TIPO_IC[l.tipo] || 'clock', 15)}</span><div><p>${esc(l.texto)}</p><small>${SC.fmtDT(l.data)} · ${esc(l.usuario)}</small></div></li>`).join('') || `<li><div><p class="mut">Nenhuma movimentação ainda. Abra uma OS ou registre uma venda.</p></div></li>`;
-
       el.innerHTML = `<div class="page-head"><div><h1>Painel</h1><p>Visão geral da assistência técnica em ${SC.fmtDate(t)}.</p></div>
         <div class="head-actions">${SC.can('os') ? `<button class="btn primary" data-q="os">${icon('plus')} Nova OS</button>` : ''}${SC.can('orcamentos') ? `<button class="btn" data-q="orc">${icon('plus')} Orçamento</button>` : ''}${SC.can('vendas') ? `<button class="btn" data-q="venda">${icon('plus')} Venda</button>` : ''}</div></div>
         <div class="stats">
@@ -51,8 +49,7 @@
         </div>
         <div class="dash-grid"><div class="card"><div class="card-h"><h3>Faturamento dos últimos 14 dias</h3><small>Total no período: ${SC.money(sum(porDia))}</small></div><div class="card-b"><div class="bars">${bars}</div></div></div>
           <div class="card"><div class="card-h"><h3>Ordens de serviço por status</h3></div><div class="card-b">${hb}</div></div></div>
-        <div class="dash-grid"><div class="card"><div class="card-h"><h3>Últimas movimentações</h3></div><ul class="feed">${feed}</ul></div>
-          <div class="card"><div class="card-h"><h3>Alertas</h3></div><div class="alerts">${al.join('')}</div></div></div>`;
+        <div class="card"><div class="card-h"><h3>Alertas</h3></div><div class="alerts">${al.join('')}</div></div>`;
 
       el.onclick = e => {
         const g = e.target.closest('[data-go]');
