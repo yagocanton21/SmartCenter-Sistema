@@ -137,7 +137,7 @@ async function runTests() {
        Prova: Apenas um cliente é registrado; o segundo é rejeitado com HTTP 409 (UNIQUE constraint).
     -------------------------------------------------------- */
     console.log('▶ Teste 3: Cadastro Concorrente de Cliente com mesmo CPF...');
-    const docDuplicado = '123.456.789-00';
+    const docDuplicado = '123.' + String(Date.now()).slice(-6) + '-00';
     const cli1 = { id: 'c_dup_1_' + Date.now(), nome: 'Cliente A', doc: docDuplicado };
     const cli2 = { id: 'c_dup_2_' + Date.now(), nome: 'Cliente B', doc: docDuplicado };
 

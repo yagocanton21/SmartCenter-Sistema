@@ -43,7 +43,6 @@
           return SC.norm([SC.pad(o.numero), o.numero, c.nome, a.marca, a.modelo, a.imei, c.doc].join(' ')).includes(q) || (qd && SC.digits(c.telefone).includes(qd));
         }).sort((a, b) => b.numero - a.numero);
         const off = SC.pager(el.querySelector('#ospager'), rows.length, st, 25, draw);
-        const t = SC.today();
         list.innerHTML = rows.length ? `<table class="tbl"><thead><tr><th>Nº</th><th>Entrada</th><th>Cliente</th><th>Aparelho</th><th>Status</th><th>Prazo</th><th class="num">Total</th><th></th></tr></thead><tbody>${rows.slice(off, off + 25).map(o => {
           const c = SC.cliOf(o), a = o.aparelho || {}, late = o.prazo && o.prazo < t && !FIM.includes(o.status);
           return `<tr data-id="${o.id}"><td><b>#${SC.pad(o.numero)}</b></td><td>${SC.fmtDate(o.dataEntrada)}</td><td>${esc(c.nome)}<small>${esc(c.telefone || '')}</small></td><td>${esc([a.marca, a.modelo].filter(Boolean).join(' '))}<small>${esc(a.tipo || '')}${a.imei ? ' · ' + esc(a.imei) : ''}</small></td>

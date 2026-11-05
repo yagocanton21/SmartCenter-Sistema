@@ -58,3 +58,4 @@ jobs:
             sleep 4
             docker compose ps
             echo "Deploy concluído com sucesso!"
+

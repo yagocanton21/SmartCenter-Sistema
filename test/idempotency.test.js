@@ -65,10 +65,11 @@ async function runTests() {
     -------------------------------------------------------- */
     console.log('▶ Teste 1: Retentativa Sequencial com Idempotency-Key...');
     const prodId1 = 'prod_idemp_1_' + Date.now();
+    const codProd1 = 'PID1_' + Date.now();
     db.prepare(`
       INSERT INTO produtos (id, codigo, nome, preco, custo, controla, estoque, ativo, data)
-      VALUES (?, 'PIDEMP1', 'Película de Vidro 3D', 25, 5, 1, 10, 1, '{}')
-    `).run(prodId1);
+      VALUES (?, ?, 'Película de Vidro 3D', 25, 5, 1, 10, 1, '{}')
+    `).run(prodId1, codProd1);
 
     const idempotencyKey1 = crypto.randomUUID();
     const vendaPayload1 = {
@@ -111,10 +112,11 @@ async function runTests() {
     -------------------------------------------------------- */
     console.log('▶ Teste 2: Concorrência Simultânea com a Mesma Idempotency-Key...');
     const prodId2 = 'prod_idemp_2_' + Date.now();
+    const codProd2 = 'PID2_' + Date.now();
     db.prepare(`
       INSERT INTO produtos (id, codigo, nome, preco, custo, controla, estoque, ativo, data)
-      VALUES (?, 'PIDEMP2', 'Cabo USB-C Original', 40, 15, 1, 5, 1, '{}')
-    `).run(prodId2);
+      VALUES (?, ?, 'Cabo USB-C Original', 40, 15, 1, 5, 1, '{}')
+    `).run(prodId2, codProd2);
 
     const idempotencyKey2 = crypto.randomUUID();
     const vendaPayload2 = {
