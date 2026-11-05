@@ -6,13 +6,24 @@
 
   function head(title, num, data, customCfg) {
     const c = customCfg || SC.db.config;
-    const ini = (c.nomeFantasia || 'SC').split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    const ini = (c.nomeFantasia || 'SC').split(/\s+/).map(w => w[0]).join('').slice(0, 1).toUpperCase();
     const contato = [c.telefone ? 'Tel: ' + esc(c.telefone) : '', c.whatsapp ? 'WhatsApp: ' + esc(c.whatsapp) : '', c.email ? esc(c.email) : ''].filter(Boolean).join(' · ');
     const end = [c.endereco, c.cidade, c.cep ? 'CEP ' + c.cep : ''].filter(Boolean).map(esc).join(' – ');
+    const info = [c.cnpj ? 'CNPJ ' + esc(c.cnpj) : '', contato, end].filter(Boolean).join(' · ');
     return `<div class="doc-head">
-      <div class="dh-logo">${c.logo ? `<img src="${c.logo}" alt="Logotipo">` : `<div class="dh-mark">${esc(ini)}</div>`}</div>
-      <div class="dh-store"><h1>${esc(c.nomeFantasia)}</h1>${c.razaoSocial ? `<div>${esc(c.razaoSocial)}</div>` : ''}${c.cnpj ? `<div>CNPJ: ${esc(c.cnpj)}</div>` : ''}${end ? `<div>${end}</div>` : ''}${contato ? `<div>${contato}</div>` : ''}</div>
-      <div class="dh-doc"><div class="dh-title">${title}</div><div class="dh-num">${num}</div><div>${data}</div></div></div>`;
+      <div class="dh-brand">
+        <div class="dh-logo">${c.logo ? `<img src="${c.logo}" alt="Logotipo">` : `<div class="dh-mark">${esc(ini)}</div>`}</div>
+        <div class="dh-store">
+          <h1>${esc(c.nomeFantasia || 'SmartCenter')}</h1>
+          ${info ? `<div class="dh-meta">${info}</div>` : ''}
+        </div>
+      </div>
+      <div class="dh-doc">
+        <div class="dh-title">${title}</div>
+        <div class="dh-num">${num}</div>
+        <div class="dh-date">${data}</div>
+      </div>
+    </div>`;
   }
   const k = (l, v, c = '') => `<div class="k ${c}"><span>${l}</span><b>${esc(v || '—')}</b></div>`;
   const box = (t, inner) => `<div class="box"><div class="box-t">${t}</div>${inner}</div>`;
@@ -64,24 +75,24 @@
   SC.print.os = id => {
     const o = SC.byId('os', id); if (!o) return;
     const c = SC.cliOf(o), ap = o.aparelho || {}, cfg = SC.db.config;
-    const num = '#' + SC.pad(o.numero);
     const pg1 = `<section class="paper">${head('ORDEM DE SERVIÇO', 'Nº ' + SC.pad(o.numero), 'Entrada: ' + SC.fmtDate(o.dataEntrada))}
       ${cliBox(c)}
-      ${box('Dados do aparelho', grid(k('Tipo', ap.tipo, 'c3') + k('Marca', ap.marca, 'c3') + k('Modelo', ap.modelo, 'c3') + k('IMEI / nº de série', ap.imei, 'c3') + k('Cor', ap.cor, 'c3') + k('Acessórios recebidos', ap.acessorios, 'c8') + k('Estado de conservação', ap.estado, 'c12')))}
+      ${box('Dados do aparelho', grid(k('Tipo', ap.tipo, 'c3') + k('Marca', ap.marca, 'c3') + k('Modelo', ap.modelo, 'c3') + k('IMEI / nº de série', ap.imei, 'c3') + k('Cor', ap.cor, 'c3') + k('Acessórios recebidos', ap.acessorios, 'c9') + k('Estado de conservação', ap.estado, 'c12')))}
       ${box('Defeito relatado pelo cliente', txt(ap.defeito))}
       ${box('Diagnóstico técnico', txt(o.diagnostico))}
       ${box('Serviços realizados', txt(o.servico))}
-      ${box('Peças utilizadas', linesTable(o.pecas, 'Nenhuma peça utilizada.'))}
+      ${box('Peças utilizadas', linesTable(o.pecas, '—'))}
       <div class="totals"><div><span>Mão de obra</span><b>${SC.money(o.maoDeObra)}</b></div><div><span>Peças</span><b>${SC.money(o.valorPecas)}</b></div><div class="tt"><span>TOTAL</span><span>${SC.money(o.total)}</span></div></div>
-      ${box('Entrega, garantia e pagamento', grid(k('Prazo de entrega', SC.fmtDate(o.prazo), 'c3') + k('Garantia', garantiaTxt(o.garantiaDias), 'c3') + k('Status', o.status, 'c3') + k('Forma de pagamento', o.formaPagamento, 'c3') + k('Condições de pagamento', cfg.condicoesPagamento, 'c12')))}
+      ${box('Entrega, garantia e pagamento', grid(k('Prazo de entrega', SC.fmtDate(o.prazo), 'c3') + k('Garantia', garantiaTxt(o.garantiaDias), 'c3') + k('Status', o.status, 'c3') + k('Forma de pagamento', o.formaPagamento, 'c3') + k('Condições de pagamento', cfg.condicoesPagamento || 'Pagamento à vista (Pix, dinheiro ou débito) ou em até 12x no cartão de crédito, conforme taxas da operadora.\nO aparelho só é entregue mediante pagamento integral do serviço.', 'c12')))}
       ${o.observacoes ? box('Observações', txt(o.observacoes)) : ''}
       <p class="decl">Declaro que deixei o aparelho acima descrito, nas condições registradas, para análise/reparo, que as informações prestadas são verdadeiras e que li e concordo com o Termo de Garantia da página seguinte.</p>
       <div class="sigs"><div class="sig"><b>${esc(c.nome || 'Cliente')}</b>Assinatura do cliente</div><div class="sig"><b>${esc(cfg.responsavel || cfg.nomeFantasia)}</b>Responsável técnico</div></div>
       ${foot()}</section>`;
-    const vars = { loja: cfg.nomeFantasia, garantia: garantiaTxt(o.garantiaDias), os: SC.pad(o.numero), cliente: c.nome || '', aparelho: [ap.marca, ap.modelo].filter(Boolean).join(' '), data: SC.fmtDate(o.dataEntrada), telefone: cfg.telefone || cfg.whatsapp || '', endereco: [cfg.endereco, cfg.cidade].filter(Boolean).join(', '), cnpj: cfg.cnpj || '' };
+    const vars = { loja: cfg.nomeFantasia || 'SmartCenter', garantia: garantiaTxt(o.garantiaDias), os: SC.pad(o.numero), cliente: c.nome || '', aparelho: [ap.marca, ap.modelo].filter(Boolean).join(' '), data: SC.fmtDate(o.dataEntrada), telefone: cfg.telefone || cfg.whatsapp || '', endereco: [cfg.endereco, cfg.cidade].filter(Boolean).join(', '), cnpj: cfg.cnpj || '' };
     const pg2 = `<section class="paper">${head('TERMO DE GARANTIA', 'OS ' + SC.pad(o.numero), SC.fmtDate(o.dataEntrada))}
       <div class="t-ref"><b>Cliente:</b> ${esc(c.nome || '—')} &nbsp;·&nbsp; <b>Aparelho:</b> ${esc(vars.aparelho || '—')} ${ap.imei ? '&nbsp;·&nbsp; <b>IMEI/Série:</b> ' + esc(ap.imei) : ''} &nbsp;·&nbsp; <b>Garantia:</b> ${esc(vars.garantia)}</div>
       ${termoHTML(cfg.termoGarantia, vars)}
+      <p class="termo-decl">Declaro ter lido e concordado com todas as condições deste Termo de Garantia.</p>
       <div class="sigs"><div class="sig"><b>${esc(c.nome || 'Cliente')}</b>Assinatura do cliente · Data ____/____/______</div><div class="sig"><b>${esc(cfg.responsavel || cfg.nomeFantasia)}</b>Responsável técnico</div></div>
       ${foot()}</section>`;
     SC.print.show(pg1 + pg2, `OS-${SC.pad(o.numero)}-${slug(c.nome)}`);
