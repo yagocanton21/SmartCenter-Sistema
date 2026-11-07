@@ -42,3 +42,10 @@ PRIMEIRO ACESSO E CONFIGURAÇÕES
 - Senha inicial: admin
 - Troque a senha no menu do usuário após o primeiro acesso.
 - Em "Configurações da loja", cadastre o nome, telefone, endereço e logotipo.
+
+========================================================================
+CHECKLIST DE ENTRADA E SENHA DO APARELHO
+========================================================================
+- A OS tem suporte a senha do aparelho (padrão desenhado 3x3 em SVG ou PIN/alfanumérica).
+- Checklist de entrada com 18 itens de inspeção rápida para Celular e Tablet (OK, Defeito, N/T).
+- Impressão otimizada em folha A4 com checklist e visualização do desenho do padrão.

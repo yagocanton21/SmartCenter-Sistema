@@ -100,9 +100,10 @@
           <h4 class="sec s12">Cliente</h4>${SC.clientFields(Object.assign({}, cli, { id: o.clienteId || cli.id }))}
           <h4 class="sec s12">Aparelho</h4>
           ${f.sel('Tipo', 'tipo', SC.APARELHOS, ap.tipo || 'Celular', { s: 3 })}${f.in('Marca', 'marca', ap.marca, { s: 3, req: 1 })}${f.in('Modelo', 'modelo', ap.modelo, { s: 3, req: 1 })}${f.in('IMEI / nº de série', 'imei', ap.imei, { s: 3 })}
-          ${f.in('Cor', 'cor', ap.cor, { s: 3 })}${f.in('Senha / padrão de desbloqueio', 'senha', ap.senha, { s: 3 })}${f.in('Acessórios recebidos', 'acessorios', ap.acessorios, { s: 6, ph: 'Ex.: carregador, capa, chip, cartão de memória' })}
+          ${f.in('Cor', 'cor', ap.cor, { s: 3 })}${SC.senhaHTML ? SC.senhaHTML(ap) : f.in('Senha / padrão de desbloqueio', 'senha', ap.senha, { s: 3 })}${f.in('Acessórios recebidos', 'acessorios', ap.acessorios, { s: 12, ph: 'Ex.: carregador, capa, chip, cartão de memória' })}
           ${f.in('Estado de conservação', 'estado', ap.estado, { s: 12, ph: 'Ex.: arranhões leves na carcaça, tela sem trincos', attrs: 'list="dl-estado"' })}
           ${f.area('Defeito relatado pelo cliente <b class="req">*</b>', 'defeito', ap.defeito, { rows: 2 })}
+          <div class="s12 ckwrap" ${(SC.usaChecklist && SC.usaChecklist(ap.tipo || 'Celular')) ? '' : 'hidden'}><h4 class="sec">Checklist de entrada (celular / tablet)</h4>${SC.checklistHTML ? SC.checklistHTML(o.checklist, o.checklistObs) : ''}</div>
           <h4 class="sec s12">Laudo técnico</h4>
           ${f.area('Diagnóstico técnico', 'diagnostico', o.diagnostico, { s: 6, rows: 3 })}${f.area('Serviço realizado', 'servico', o.servico, { s: 6, rows: 3 })}
           <div class="s12"><span class="lbl">Peças utilizadas</span>${SC.linesHTML(o.pecas)}</div>
@@ -118,6 +119,12 @@
       });
       const body = m.body;
       SC.bindClientPicker(body); SC.bindLines(body);
+      if (SC.bindSenha) SC.bindSenha(body);
+      if (SC.bindChecklist) SC.bindChecklist(body);
+      const ckw = body.querySelector('.ckwrap'), tipoSel = body.querySelector('[name=tipo]');
+      if (ckw && tipoSel && SC.usaChecklist) {
+        tipoSel.addEventListener('change', () => { ckw.hidden = !SC.usaChecklist(tipoSel.value); });
+      }
       const upd = () => {
         const vp = SC.sumLines(SC.readLines(body)), mo = SC.parseMoney(body.querySelector('[name=maoDeObra]').value);
         body.querySelector('#vpecas').textContent = SC.money(vp); body.querySelector('#vtotal').textContent = SC.money(vp + mo);
@@ -156,9 +163,32 @@
         Object.assign(base, {
           dataEntrada: v.dataEntrada + 'T' + ((os && os.dataEntrada ? os.dataEntrada.slice(11, 19) : SC.nowISO().slice(11, 19)) || '00:00:00'),
           clienteId: c.id, cliSnap: SC.snap(c),
-          aparelho: { tipo: v.tipo, marca: v.marca.trim(), modelo: v.modelo.trim(), imei: v.imei.trim(), cor: v.cor.trim(), senha: v.senha, acessorios: v.acessorios.trim(), estado: v.estado.trim(), defeito: v.defeito.trim() },
-          diagnostico: v.diagnostico.trim(), servico: v.servico.trim(), pecas, maoDeObra: mo, valorPecas: vp, total: SC.r2(mo + vp),
-          prazo: v.prazo, garantiaDias: Math.max(0, parseInt(v.garantiaDias) || 0), formaPagamento: v.formaPagamento, observacoes: v.observacoes.trim(), status: v.status
+          aparelho: {
+            tipo: v.tipo,
+            marca: v.marca.trim(),
+            modelo: v.modelo.trim(),
+            imei: v.imei.trim(),
+            cor: v.cor.trim(),
+            senhaTipo: v.senhaTipo,
+            senha: v.senhaTipo === 'alfa' ? (v.senha || '').trim() : '',
+            senhaPadrao: v.senhaTipo === 'padrao' ? v.senhaPadrao : '',
+            acessorios: v.acessorios.trim(),
+            estado: v.estado.trim(),
+            defeito: v.defeito.trim()
+          },
+          diagnostico: v.diagnostico.trim(),
+          servico: v.servico.trim(),
+          pecas,
+          maoDeObra: mo,
+          valorPecas: vp,
+          total: SC.r2(mo + vp),
+          checklist: (SC.usaChecklist && SC.usaChecklist(v.tipo) && SC.readChecklist) ? SC.readChecklist(body) : null,
+          checklistObs: (SC.usaChecklist && SC.usaChecklist(v.tipo)) ? (v.ckObs || '').trim() : '',
+          prazo: v.prazo,
+          garantiaDias: Math.max(0, parseInt(v.garantiaDias) || 0),
+          formaPagamento: v.formaPagamento,
+          observacoes: v.observacoes.trim(),
+          status: v.status
         });
         SC.osApplyStatus(base, old);
 

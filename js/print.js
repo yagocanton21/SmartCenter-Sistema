@@ -79,6 +79,7 @@
       ${cliBox(c)}
       ${box('Dados do aparelho', grid(k('Tipo', ap.tipo, 'c3') + k('Marca', ap.marca, 'c3') + k('Modelo', ap.modelo, 'c3') + k('IMEI / nº de série', ap.imei, 'c3') + k('Cor', ap.cor, 'c3') + k('Acessórios recebidos', ap.acessorios, 'c9') + k('Estado de conservação', ap.estado, 'c12')))}
       ${box('Defeito relatado pelo cliente', txt(ap.defeito))}
+      ${SC.printAparelhoExtra ? SC.printAparelhoExtra(o) : ''}
       ${box('Diagnóstico técnico', txt(o.diagnostico))}
       ${box('Serviços realizados', txt(o.servico))}
       ${box('Peças utilizadas', linesTable(o.pecas, '—'))}
