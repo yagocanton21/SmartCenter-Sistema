@@ -22,6 +22,9 @@ class Cliente {
 
   static salvarCliente(cliente) {
     const db = getDatabase();
+    if (!cliente.id || !String(cliente.nome || '').trim()) throw new Error('Nome e ID do cliente obrigatórios.');
+    require('./validation').id(cliente.id);
+    cliente.doc = String(cliente.doc || '').replace(/\D/g, '');
     try {
       const stmt = db.prepare(`
         INSERT INTO clientes (id, nome, doc, telefone, data) 
@@ -48,6 +51,7 @@ class Cliente {
     db.exec('DELETE FROM clientes;');
     const stmt = db.prepare('INSERT INTO clientes (id, nome, doc, telefone, data) VALUES (?, ?, ?, ?, ?);');
     for (const c of clientes) {
+      c.doc = String(c.doc || '').replace(/\D/g, '');
       stmt.run(c.id, c.nome || '', c.doc || null, c.telefone || '', JSON.stringify(c));
     }
   }

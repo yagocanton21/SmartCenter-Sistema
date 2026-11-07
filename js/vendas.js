@@ -36,9 +36,9 @@
       };
       draw();
       el.querySelector('#vq').addEventListener('input', SC.debounce(e => { sv.q = e.target.value; sv.page = 1; draw(); }, 150));
-      el.querySelector('#vde').addEventListener('change', e => { sv.de = e.target.value; sv.page = 1; draw(); });
-      el.querySelector('#vate').addEventListener('change', e => { sv.ate = e.target.value; sv.page = 1; draw(); });
-      el.querySelector('#vst').addEventListener('change', e => { sv.status = e.target.value; sv.page = 1; draw(); });
+      el.querySelector('#vde').addEventListener('change', async e => { sv.de = e.target.value; sv.page = 1; draw(); });
+      el.querySelector('#vate').addEventListener('change', async e => { sv.ate = e.target.value; sv.page = 1; draw(); });
+      el.querySelector('#vst').addEventListener('change', async e => { sv.status = e.target.value; sv.page = 1; draw(); });
       const nb = el.querySelector('[data-new]'); if (nb) nb.onclick = () => V.form();
       list.addEventListener('click', async e => {
         const b = e.target.closest('[data-act]'); if (!b) return;
@@ -46,7 +46,7 @@
         if (b.dataset.act === 'view') V.view(v);
         else if (b.dataset.act === 'print') SC.print.venda(id);
         else if (b.dataset.act === 'del' && await SC.confirm(`Excluir a venda <b>#${SC.pad(v.numero)}</b> cancelada?`, { danger: true, ok: 'Excluir' })) {
-          SC.db.vendas = SC.db.vendas.filter(x => x.id !== id); SC.log('venda', `Venda #${SC.pad(v.numero)} excluída`); SC.save(); SC.toast('Venda excluída.'); SC.refresh();
+          SC.db.vendas = SC.db.vendas.filter(x => x.id !== id); SC.log('venda', `Venda #${SC.pad(v.numero)} excluída`); if (!await SC.save()) return; SC.toast('Venda excluída.'); SC.refresh();
         }
       });
     },
@@ -65,7 +65,7 @@
         if (e.target.closest('[data-pr]')) SC.print.venda(v.id);
         else if (e.target.closest('[data-cancel]') && await SC.confirm(`Cancelar a venda <b>#${SC.pad(v.numero)}</b>? Os itens voltam para o estoque.`, { danger: true, ok: 'Cancelar venda' })) {
           SC.estornaEstoque(v.baixa); v.baixa = []; v.status = 'Cancelada';
-          SC.log('venda', `Venda #${SC.pad(v.numero)} cancelada (${SC.money(v.total)})`); SC.save(); m.close(); SC.refresh(); SC.toast('Venda cancelada e estoque devolvido.');
+          SC.log('venda', `Venda #${SC.pad(v.numero)} cancelada (${SC.money(v.total)})`); if (!await SC.save()) return; m.close(); SC.refresh(); SC.toast('Venda cancelada e estoque devolvido.');
         }
       });
     },
@@ -116,28 +116,8 @@
           formaPagamento: v.pagamento, parcelas: Math.max(1, parseInt(v.parcelas) || 1), obs: v.obs.trim(), status: 'Concluída', usuario: SC.user.nome
         };
 
-        if (SC.storage.isSQLite) {
-          try {
-            const res = await fetch('/api/vendas', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Idempotency-Key': idempotencyKey
-              },
-              body: JSON.stringify(venda)
-            });
-            const data = await res.json();
-            if (!res.ok) return err(data.error || 'Erro ao registrar venda no SQLite.');
-            venda.numero = data.venda.numero;
-            await SC.load();
-          } catch (e) {
-            return err('Falha na conexão com o servidor SQLite.');
-          }
-        } else {
-          venda.baixa = SC.baixaEstoque(itens);
-          SC.db.vendas.unshift(venda);
-          SC.save();
-        }
+        SC.db.vendas.unshift(venda);
+        if (!await SC.save()) { unlock(); return false; }
 
         SC.log('venda', `Venda #${SC.pad(venda.numero)} – ${SC.money(venda.total)} (${venda.formaPagamento})`);
         m.close(); SC.refresh(); SC.toast(`Venda #${SC.pad(venda.numero)} registrada.`);
@@ -177,15 +157,15 @@
       };
       draw();
       el.querySelector('#pq').addEventListener('input', SC.debounce(e => { sp.q = e.target.value; sp.page = 1; draw(); }, 150));
-      el.querySelector('#pcat').addEventListener('change', e => { sp.cat = e.target.value; sp.page = 1; draw(); });
-      el.querySelector('#pbx').addEventListener('change', e => { sp.baixo = e.target.checked; sp.page = 1; draw(); });
+      el.querySelector('#pcat').addEventListener('change', async e => { sp.cat = e.target.value; sp.page = 1; draw(); });
+      el.querySelector('#pbx').addEventListener('change', async e => { sp.baixo = e.target.checked; sp.page = 1; draw(); });
       const nb = el.querySelector('[data-new]'); if (nb) nb.onclick = () => PR.form();
       list.addEventListener('click', async e => {
         const b = e.target.closest('[data-act]'); if (!b) return;
         const id = b.closest('tr').dataset.id, p = SC.byId('produtos', id);
         if (b.dataset.act === 'edit') PR.form(p);
         else if (b.dataset.act === 'del' && await SC.confirm(`Excluir o produto <b>${esc(p.nome)}</b>? Vendas e OS já registradas continuam no histórico.`, { danger: true, ok: 'Excluir' })) {
-          p.ativo = false; SC.log('produto', `Produto inativado: ${p.nome}`); SC.save(); SC.toast('Produto excluído.'); SC.refresh();
+          p.ativo = false; SC.log('produto', `Produto inativado: ${p.nome}`); if (!await SC.save()) return; SC.toast('Produto excluído.'); SC.refresh();
         }
       });
     },
@@ -208,16 +188,16 @@
       body.addEventListener('input', upd); body.addEventListener('focusout', upd); upd();
       g('categoria').addEventListener('change', () => { if (isNew) g('controla').checked = g('categoria').value !== 'Serviço'; });
       body.querySelector('form').addEventListener('submit', e => e.preventDefault());
-      m.el.querySelector('[data-save]').onclick = () => {
+      m.el.querySelector('[data-save]').onclick = async () => {
         const v = SC.vals(body);
         if (!v.nome.trim()) return SC.toast('Informe o nome do produto.', 'err');
         const preco = SC.parseMoney(v.preco), custo = SC.parseMoney(v.custo);
         if (preco <= 0) return SC.toast('Informe o preço de venda.', 'err');
         const base = p || { id: SC.uid(), ativo: true };
         Object.assign(base, { nome: v.nome.trim(), categoria: v.categoria, custo, preco, controla: v.controla, estoque: parseInt(v.estoque) || 0, estoqueMin: parseInt(v.estoqueMin) || 0, ativo: true });
-        base.codigo = v.codigo.trim() || base.codigo || 'P' + SC.pad(SC.nextNum('produto'), 4);
+        base.codigo = v.codigo.trim() || base.codigo || '';
         if (isNew) SC.db.produtos.push(base);
-        SC.log('produto', `Produto ${isNew ? 'cadastrado' : 'atualizado'}: ${base.nome}`); SC.save(); m.close(); SC.refresh(); SC.toast('Produto salvo.');
+        SC.log('produto', `Produto ${isNew ? 'cadastrado' : 'atualizado'}: ${base.nome}`); if (!await SC.save()) return; m.close(); SC.refresh(); SC.toast('Produto salvo.');
       };
     }
   });

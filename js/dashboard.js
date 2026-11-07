@@ -31,7 +31,6 @@
       if (bx) al.push(`<div class="alert">${icon('box', 18)}<span>${bx} produto(s) com estoque baixo ou zerado.</span><button class="btn sm" data-go="produtos" data-filter="baixo">Ver</button></div>`);
       const dias7 = SC.db.config.ultimoBackup ? (new Date(t) - new Date(SC.db.config.ultimoBackup.slice(0, 10))) / 864e5 : 999;
       if ((db.os.length + db.clientes.length + db.vendas.length) && dias7 > 7 && SC.can('backup')) al.push(`<div class="alert">${icon('database', 18)}<span>${SC.db.config.ultimoBackup ? 'O último backup tem mais de 7 dias.' : 'Você ainda não fez nenhum backup.'}</span><button class="btn sm" data-go="backup" data-filter="">Fazer backup</button></div>`);
-      if (SC.user.senha === SC.hash('admin')) al.push(`<div class="alert">${icon('key', 18)}<span>Você ainda usa a senha padrão. Troque-a no menu do usuário.</span><button class="btn sm" data-pass>Trocar senha</button></div>`);
       if (!SC.db.config.cnpj && !SC.db.config.endereco && SC.can('config')) al.push(`<div class="alert">${icon('settings', 18)}<span>Cadastre os dados da loja para que apareçam nos documentos impressos.</span><button class="btn sm" data-go="config" data-filter="">Configurar</button></div>`);
       if (!al.length) al.push(`<div class="alert ok">${icon('check', 18)}<span>Tudo em ordem. Nenhum alerta no momento.</span></div>`);
 

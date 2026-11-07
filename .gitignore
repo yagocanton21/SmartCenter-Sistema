@@ -4,4 +4,8 @@ node_modules/
 *.db-wal
 data/
 .env
+*.key
+*.bak
+backups/
+.tools/
 

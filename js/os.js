@@ -53,7 +53,7 @@
       };
       draw();
       el.querySelector('#osq').addEventListener('input', SC.debounce(e => { st.q = e.target.value; st.page = 1; draw(); }, 150));
-      el.querySelector('#oss').addEventListener('change', e => { st.status = e.target.value; st.page = 1; draw(); });
+      el.querySelector('#oss').addEventListener('change', async e => { st.status = e.target.value; st.page = 1; draw(); });
       const nb = el.querySelector('[data-new]'); if (nb) nb.onclick = () => P.form();
       list.addEventListener('click', async e => {
         const b = e.target.closest('[data-act]'); if (!b) return;
@@ -64,10 +64,10 @@
           estorna(o);
           SC.db.orcamentos.forEach(q => { if (q.osId === o.id) q.osId = null; });
           SC.db.os = SC.db.os.filter(x => x.id !== id);
-          SC.log('os', `OS #${SC.pad(o.numero)} excluída`); SC.save(); SC.toast('OS excluída.'); SC.refresh();
+          SC.log('os', `OS #${SC.pad(o.numero)} excluída`); if (!await SC.save()) return; SC.toast('OS excluída.'); SC.refresh();
         }
       });
-      list.addEventListener('change', e => {
+      list.addEventListener('change', async e => {
         const s = e.target.closest('[data-status]'); if (!s) return;
         const o = SC.byId('os', s.closest('tr').dataset.id), old = o.status, novoStatus = s.value;
         if (FIM.includes(novoStatus) && !FIM.includes(old)) {
@@ -82,7 +82,7 @@
           }
         }
         o.status = novoStatus; SC.osApplyStatus(o, old);
-        SC.log('os', `OS #${SC.pad(o.numero)}: ${old} → ${o.status}`); SC.save(); SC.toast(`OS #${SC.pad(o.numero)} agora está "${o.status}".`); SC.refresh();
+        SC.log('os', `OS #${SC.pad(o.numero)}: ${old} → ${o.status}`); if (!await SC.save()) return; SC.toast(`OS #${SC.pad(o.numero)} agora está "${o.status}".`); SC.refresh();
       });
     },
     open(id) { const o = SC.byId('os', id); if (o) P.form(o); },
@@ -149,7 +149,7 @@
         else base = { id: SC.uid(), numero: SC.nextNum('os'), historico: [], baixaEstoque: [], estoqueBaixado: false, orcamentoId: o.orcamentoId || null };
 
         // Validação de estoque para status Concluído ou Entregue
-        if (FIM.includes(v.status)) {
+        if (!SC.storage.isSQLite && FIM.includes(v.status)) {
           const need = {};
           pecas.forEach(i => { if (i.produtoId) need[i.produtoId] = (need[i.produtoId] || 0) + i.qtd; });
           for (const pid in need) {
@@ -192,30 +192,8 @@
         });
         SC.osApplyStatus(base, old);
 
-        if (SC.storage.isSQLite) {
-          try {
-            const res = await fetch('/api/os', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Idempotency-Key': idempotencyKey
-              },
-              body: JSON.stringify(base)
-            });
-            const data = await res.json();
-            if (!res.ok) return err(data.error || 'Erro ao salvar OS no SQLite.');
-            base.numero = data.os.numero;
-            await SC.load();
-          } catch (e) {
-            return err('Falha na conexão com o servidor SQLite.');
-          }
-        } else {
-          if (isNew) {
-            SC.db.os.unshift(base);
-            if (base.orcamentoId) { const q = SC.byId('orcamentos', base.orcamentoId); if (q) q.osId = base.id; }
-          }
-          SC.save();
-        }
+        if (isNew) SC.db.os.unshift(base);
+        if (!await SC.save()) { unlock(); return false; }
 
         if (isNew) {
           SC.log('os', `OS #${SC.pad(base.numero)} aberta para ${c.nome} (${base.aparelho.marca} ${base.aparelho.modelo})`);

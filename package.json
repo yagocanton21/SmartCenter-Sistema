@@ -1,14 +1,15 @@
 {
   "name": "smartcenter-sistema",
-  "version": "1.3.0",
+  "version": "2.0.0",
   "description": "Sistema de Gestão para Assistência Técnica com SQLite e Docker",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "node test/concurrency.test.js && node test/idempotency.test.js"
+    "test": "node test/concurrency.test.js && node test/idempotency.test.js && node test/security.test.js && node test/migration.test.js && node test/frontend.test.js",
+    "backup": "node scripts/backup.js"
   },
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=24.0.0"
   },
   "author": "Yago Canton",
   "license": "ISC"

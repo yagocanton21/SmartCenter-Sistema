@@ -10,10 +10,12 @@ class Idempotency {
   }
 
   /* Busca uma chave de idempotência existente */
-  static get(key) {
+  static get(key, endpoint) {
     if (!key) return null;
     const db = getDatabase();
-    return db.prepare('SELECT * FROM idempotency_keys WHERE key = ?').get(key);
+    const row = db.prepare('SELECT * FROM idempotency_keys WHERE key = ? AND endpoint = ?').get(key, endpoint);
+    if (row) row.response_body = require('../security/secrets').open(row.response_body);
+    return row;
   }
 
   /* Salva a resposta gerada para a chave de idempotência dentro da transação */
@@ -25,7 +27,7 @@ class Idempotency {
       INSERT INTO idempotency_keys (key, endpoint, request_hash, response_status, response_body, created_at)
       VALUES (?, ?, ?, ?, ?, ?);
     `);
-    stmt.run(key, endpoint, requestHash, Number(responseStatus), bodyStr, new Date().toISOString());
+    stmt.run(key, endpoint, requestHash, Number(responseStatus), require('../security/secrets').seal(bodyStr), new Date().toISOString());
   }
 
   /* Processamento de Webhooks: grava o ID do evento primeiro.
@@ -50,7 +52,7 @@ class Idempotency {
 
   /* Validação de assinatura criptográfica de Webhooks usando o corpo bruto (Raw Body) */
   static verifyWebhookSignature(rawBody, signature, secret) {
-    if (!secret) return true; // Se nenhum segredo foi configurado em ambiente de teste/dev
+    if (!secret) return false;
     if (!signature) return false;
     const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
     try {

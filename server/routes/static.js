@@ -1,45 +1,19 @@
-/* server/routes/static.js – Servidor de arquivos estáticos com suporte a MIME Types */
 const fs = require('node:fs');
 const path = require('node:path');
 const { ROOT_DIR } = require('../config');
-
-const MIME = {
-  '.html': 'text/html; charset=utf-8',
-  '.css': 'text/css; charset=utf-8',
-  '.js': 'text/javascript; charset=utf-8',
-  '.json': 'application/json; charset=utf-8',
-  '.png': 'image/png',
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.svg': 'image/svg+xml',
-  '.ico': 'image/x-icon',
-  '.txt': 'text/plain; charset=utf-8'
-};
-
+const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8' };
+const assets = new Set(['/index.html']);
+for (const dir of ['js', 'css']) for (const file of fs.readdirSync(path.join(ROOT_DIR, dir))) {
+  if (['.js', '.css'].includes(path.extname(file))) assets.add(`/${dir}/${file}`);
+}
 function handleStaticRequest(req, res, pathname) {
-  let filePath = path.join(ROOT_DIR, pathname === '/' ? 'index.html' : pathname);
-  filePath = path.normalize(filePath);
-
-  // Prevenção contra Directory Traversal (ex: /../../etc/passwd)
-  if (!filePath.startsWith(ROOT_DIR)) {
-    res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
-    return res.end('403 Proibido');
-  }
-
-  fs.stat(filePath, (err, stats) => {
-    if (err || !stats.isFile()) {
-      res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
-      return res.end('<h3>404 Arquivo não encontrado</h3>');
-    }
-
-    const ext = path.extname(filePath).toLowerCase();
-    const contentType = MIME[ext] || 'application/octet-stream';
-    res.writeHead(200, { 'Content-Type': contentType });
-    fs.createReadStream(filePath).pipe(res);
+  if (pathname === '/') pathname = '/index.html';
+  if (!['GET', 'HEAD'].includes(req.method) || !assets.has(pathname)) { res.writeHead(404); return res.end('Arquivo não encontrado'); }
+  fs.readFile(path.join(ROOT_DIR, pathname), (err, data) => {
+    if (err) { res.writeHead(404); return res.end(); }
+    res.writeHead(200, { 'Content-Type': MIME[path.extname(pathname)], 'Cache-Control': 'no-cache' });
+    res.end(req.method === 'HEAD' ? undefined : data);
   });
 }
-
-module.exports = {
-  handleStaticRequest
-};
-
+module.exports = { handleStaticRequest };
+﻿

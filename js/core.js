@@ -1,10 +1,8 @@
 /* core.js – dados, armazenamento, formatação e regras de negócio compartilhadas.
-   Para integrar com um banco de dados no futuro, substitua apenas SC.storage (read/write/clear). */
+   Persist?ncia e sess?o s?o controladas por remote.js e pelo servidor. */
 (function () {
   'use strict';
   const SC = (window.SC = { pages: {}, print: {} });
-  const KEY = 'smartcenter.db.v1';
-  const SKEY = 'smartcenter.session';
 
   /* ---------- Constantes ---------- */
   SC.STATUS_OS = ['Recebido', 'Em análise', 'Aguardando aprovação', 'Aguardando peças', 'Em reparo', 'Concluído', 'Entregue'];
@@ -86,86 +84,10 @@
     }
     return false;
   };
-  SC.hash = s => {
-    let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
-    const str = 'sc|' + s;
-    for (let i = 0; i < str.length; i++) { const ch = str.charCodeAt(i); h1 = Math.imul(h1 ^ ch, 2654435761); h2 = Math.imul(h2 ^ ch, 1597334677); }
-    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
-    h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
-    return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16);
-  };
   SC.debounce = (fn, ms = 200) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
 
   /* ---------- Armazenamento (adaptador SQLite + fallback LocalStorage) ---------- */
-  SC.storage = {
-    mem: null, ok: true, isSQLite: false,
-    read() {
-      try {
-        const t = localStorage.getItem(KEY);
-        this.ok = true;
-        return t ? JSON.parse(t) : this.mem;
-      } catch (e) {
-        this.ok = false;
-        return this.mem;
-      }
-    },
-    write(d) {
-      this.mem = d;
-      try {
-        localStorage.setItem(KEY, JSON.stringify(d));
-        this.ok = true;
-      } catch (e) {
-        this.ok = false;
-      }
-      if (this.isSQLite) {
-        SC.storage.saveSQLite(d);
-      }
-      return this.ok || this.isSQLite;
-    },
-    clear() {
-      this.mem = null;
-      try { localStorage.removeItem(KEY); } catch (e) { /* ignore */ }
-      if (this.isSQLite) {
-        fetch('/api/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(SC.defaults()) }).catch(() => {});
-      }
-    },
-    async saveSQLite(d) {
-      try {
-        const res = await fetch('/api/save', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(d)
-        });
-        if (res.ok) {
-          this.isSQLite = true;
-          return true;
-        }
-      } catch (e) {
-        console.warn('Sincronização com SQLite offline:', e);
-      }
-      return false;
-    },
-    async checkSQLite() {
-      if (location.protocol !== 'http:' && location.protocol !== 'https:') return false;
-      try {
-        const res = await fetch('/api/status', { cache: 'no-store' });
-        if (res.ok) {
-          const data = await res.json();
-          if (data && data.driver === 'sqlite') {
-            this.isSQLite = true;
-            return data;
-          }
-        }
-      } catch (e) {
-        this.isSQLite = false;
-      }
-      return false;
-    }
-  };
-  SC.session = {
-    get() { try { return sessionStorage.getItem(SKEY); } catch (e) { return SC._sess || null; } },
-    set(v) { SC._sess = v; try { v ? sessionStorage.setItem(SKEY, v) : sessionStorage.removeItem(SKEY); } catch (e) { /* ignore */ } }
-  };
+  SC.storage = { ok: true, isSQLite: true };
 
   SC.TERMO_PADRAO = [
     '# TERMO DE GARANTIA',
@@ -217,53 +139,10 @@
       condicoesPagamento: 'Pagamento à vista (Pix, dinheiro ou débito) ou em até 12x no cartão de crédito, conforme taxas da operadora. O aparelho só é entregue mediante pagamento integral do serviço.',
       termoGarantia: SC.TERMO_PADRAO, ultimoBackup: null
     },
-    users: [{ id: SC.uid(), nome: 'Administrador', login: 'admin', senha: SC.hash('admin'), perfil: 'admin', perms: SC.PERFIS.admin.perms.slice(), ativo: true }],
+    users: [],
     clientes: [], os: [], orcamentos: [], produtos: [], vendas: [], log: [],
     seq: { os: 0, orcamento: 0, venda: 0, produto: 0 }
   });
-
-  SC.load = async () => {
-    const def = SC.defaults();
-    let d = null;
-
-    const sqliteStatus = await SC.storage.checkSQLite();
-    if (sqliteStatus) {
-      try {
-        const res = await fetch('/api/db', { cache: 'no-store' });
-        if (res.ok) {
-          const snap = await res.json();
-          if (snap.hasData) {
-            d = snap.db;
-          } else {
-            const localData = SC.storage.read();
-            if (localData && (localData.clientes?.length || localData.os?.length || localData.produtos?.length)) {
-              d = Object.assign(def, localData);
-              await SC.storage.saveSQLite(d);
-            }
-          }
-        }
-      } catch (e) {
-        console.warn('Erro ao carregar do SQLite, usando fallback:', e);
-      }
-    }
-
-    if (!d) d = SC.storage.read();
-    if (!d) { SC.db = def; SC.save(); return; }
-    SC.db = Object.assign(def, d);
-    SC.db.config = Object.assign(SC.defaults().config, d.config || {});
-    SC.db.seq = Object.assign({ os: 0, orcamento: 0, venda: 0, produto: 0 }, d.seq || {});
-    if (!SC.db.users || !SC.db.users.length) SC.db.users = SC.defaults().users;
-    try { localStorage.setItem(KEY, JSON.stringify(SC.db)); } catch {}
-  };
-  let warned = false;
-  SC.save = () => {
-    const ok = SC.storage.write(SC.db);
-    if (!ok && !warned && !SC.storage.isSQLite && SC.toast) {
-      warned = true;
-      SC.toast('Não foi possível gravar no navegador (armazenamento cheio ou bloqueado). Faça um backup agora.', 'warn');
-    }
-    return ok;
-  };
 
   /* ---------- Acesso e regras ---------- */
   SC.byId = (list, id) => SC.db[list].find(x => x.id === id);
@@ -343,7 +222,7 @@
     const prod = [
       ['Tela iPhone 11 (OEM)', 'Peça', 120, 289.9, 6, 2], ['Bateria Samsung A30', 'Peça', 38, 99.9, 9, 3], ['Película 3D', 'Acessório', 2.5, 19.9, 40, 10],
       ['Capinha Silicone', 'Acessório', 6, 29.9, 25, 8], ['Carregador Turbo 25W', 'Acessório', 22, 69.9, 2, 4], ['Formatação / Backup', 'Serviço', 0, 80, 0, 0]
-    ].map(x => { const p = { id: SC.uid(), codigo: 'P' + SC.pad(SC.nextNum('produto'), 4), nome: x[0], categoria: x[1], custo: x[2], preco: x[3], estoque: x[4], estoqueMin: x[5], controla: x[1] !== 'Serviço' }; d.produtos.push(p); return p; });
+    ].map(x => { const p = { id: SC.uid(), codigo: '', nome: x[0], categoria: x[1], custo: x[2], preco: x[3], estoque: x[4], estoqueMin: x[5], controla: x[1] !== 'Serviço' }; d.produtos.push(p); return p; });
     const mk = (c, ap, st, dias, pecas, mo, prazoOff) => {
       const o = { id: SC.uid(), numero: SC.nextNum('os'), dataEntrada: SC.addDays(t, -dias) + 'T10:00:00', clienteId: c.id, cliSnap: SC.snap(c), aparelho: ap, diagnostico: ap.diag || '', servico: '', pecas, maoDeObra: mo, valorPecas: SC.sumLines(pecas), total: SC.r2(SC.sumLines(pecas) + mo), prazo: SC.addDays(t, prazoOff), garantiaDias: 90, formaPagamento: 'Pix', observacoes: '', status: 'Recebido', historico: [], baixaEstoque: [], estoqueBaixado: false };
       d.os.unshift(o);
@@ -358,7 +237,6 @@
     const vi = (p, q) => ({ produtoId: p.id, descricao: p.nome, qtd: q, preco: p.preco, custo: p.custo });
     [[cli[1], [vi(prod[2], 1), vi(prod[3], 1)], 0, 'Pix', 1], [null, [vi(prod[4], 1)], 5, 'Dinheiro', 0]].forEach(([c, itens, desc, pg, dias]) => {
       const sub = SC.r2(itens.reduce((a, i) => a + i.qtd * i.preco, 0));
-      itens.forEach(i => { const p = SC.byId('produtos', i.produtoId); p.estoque -= i.qtd; });
       d.vendas.unshift({ id: SC.uid(), numero: SC.nextNum('venda'), data: SC.addDays(t, -dias) + 'T15:30:00', clienteId: c ? c.id : null, clienteNome: c ? c.nome : 'Consumidor final', itens, subtotal: sub, descontoTipo: 'valor', descontoValor: desc, desconto: desc, total: SC.r2(sub - desc), lucro: SC.r2(sub - desc - itens.reduce((a, i) => a + i.qtd * i.custo, 0)), formaPagamento: pg, parcelas: 1, obs: '', status: 'Concluída', usuario: 'Demonstração', baixa: itens.map(i => ({ produtoId: i.produtoId, qtd: i.qtd })) });
     });
     d.orcamentos.unshift({ id: SC.uid(), numero: SC.nextNum('orcamento'), data: t + 'T09:00:00', clienteId: cli[2].id, cliSnap: SC.snap(cli[2]), aparelho: { tipo: 'Celular', marca: 'Xiaomi', modelo: 'Redmi Note 10', defeito: 'Conector de carga com mau contato' }, diagnostico: 'Troca do conector de carga', pecas: [{ produtoId: null, descricao: 'Conector de carga', qtd: 1, valor: 35 }], maoDeObra: 70, valorPecas: 35, total: 105, validade: SC.addDays(t, 7), observacoes: '', status: 'Pendente', osId: null });

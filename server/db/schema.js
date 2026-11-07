@@ -3,6 +3,21 @@ const { getDatabase } = require('./connection');
 
 function initSchema() {
   const db = getDatabase();
+  const version = db.prepare('PRAGMA user_version').get().user_version;
+  const existing = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all().map(r => r.name);
+  const tables = ['config', 'seq', 'users', 'clientes', 'produtos', 'os', 'orcamentos', 'vendas', 'logs'];
+  let legacy;
+  if (version < 2 && existing.includes('produtos')) {
+    const { DB_PATH } = require('../config');
+    if (DB_PATH !== ':memory:') {
+      const backup = DB_PATH + '.pre-v2-' + Date.now() + '.bak';
+      db.exec(`VACUUM INTO '${backup.replace(/'/g, "''")}';`);
+      console.log('Backup antes da migração:', backup);
+    }
+    legacy = Object.fromEntries(tables.map(t => [t, existing.includes(t) ? db.prepare(`SELECT * FROM ${t}`).all() : []]));
+    db.exec('BEGIN IMMEDIATE;');
+    for (const table of tables) if (existing.includes(table)) db.exec(`DROP TABLE ${table};`);
+  }
 
   function ensureColumn(table, column, def) {
     const cols = db.prepare(`PRAGMA table_info(${table})`).all().map(c => c.name);
@@ -15,7 +30,7 @@ function initSchema() {
     }
   }
 
-  db.exec(`
+  try { db.exec(`
     CREATE TABLE IF NOT EXISTS config (
       key TEXT PRIMARY KEY,
       value TEXT
@@ -108,11 +123,50 @@ function initSchema() {
       payload TEXT,
       processed_at TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS payment_charges (
+      id TEXT PRIMARY KEY,
+      gateway TEXT NOT NULL,
+      os_id TEXT NOT NULL,
+      amount_cents INTEGER NOT NULL CHECK(amount_cents > 0),
+      method TEXT NOT NULL,
+      status TEXT NOT NULL
+    );
   `);
 
   ensureColumn('vendas', 'status', 'TEXT');
   ensureColumn('os', 'status', 'TEXT');
   ensureColumn('orcamentos', 'status', 'TEXT');
+  if (legacy) {
+    const models = require('../models');
+    const config = Object.fromEntries(legacy.config.map(r => [r.key, JSON.parse(r.value)]));
+    models.StoreConfig.saveConfig(config);
+    models.StoreConfig.saveSequences(Object.fromEntries(legacy.seq.map(r => [r.name, r.val])));
+    models.Usuario.saveAll(legacy.users.map(r => JSON.parse(r.data)));
+    models.Cliente.saveAll(legacy.clientes.map(r => JSON.parse(r.data)));
+    models.Produto.saveAll(legacy.produtos.map(r => JSON.parse(r.data)));
+    models.OS.saveAll(legacy.os.map(r => require('../security/secrets').decode(r.data)));
+    models.Orcamento.saveAll(legacy.orcamentos.map(r => JSON.parse(r.data)));
+    models.Venda.saveAll(legacy.vendas.map(r => JSON.parse(r.data)));
+    models.Log.saveAll(legacy.logs.map(r => JSON.parse(r.data)));
+  }
+  for (const [name, table, column] of [['os','os','numero'], ['venda','vendas','numero'], ['orcamento','orcamentos','numero']]) {
+    const max = db.prepare(`SELECT coalesce(max(${column}),0) AS n FROM ${table}`).get().n;
+    db.prepare('INSERT INTO seq(name,val) VALUES(?,?) ON CONFLICT(name) DO UPDATE SET val=max(val,excluded.val)').run(name, max);
+  }
+  // Encrypt device secrets left in JSON by older versions.
+  const secrets = require('../security/secrets');
+  for (const row of db.prepare('SELECT id,data FROM os').all()) {
+    const value = secrets.decode(row.data);
+    if (value.status === 'Entregue' && value.aparelho) { value.aparelho.senha = ''; value.aparelho.senhaPadrao = ''; }
+    db.prepare('UPDATE os SET data=? WHERE id=?').run(secrets.encode(value), row.id);
+  }
+  if (version < 2) db.exec('DELETE FROM idempotency_keys;');
+  db.exec('PRAGMA user_version = 2;');
+  if (legacy) db.exec('COMMIT;');
+  } catch (err) {
+    if (legacy) db.exec('ROLLBACK;');
+    throw new Error(`Não foi possível migrar o banco; dados anteriores preservados: ${err.message}`);
+  }
 }
 
 module.exports = {

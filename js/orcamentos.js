@@ -34,7 +34,7 @@
       };
       draw();
       el.querySelector('#oq').addEventListener('input', SC.debounce(e => { st.q = e.target.value; st.page = 1; draw(); }, 150));
-      el.querySelector('#os2').addEventListener('change', e => { st.status = e.target.value; st.page = 1; draw(); });
+      el.querySelector('#os2').addEventListener('change', async e => { st.status = e.target.value; st.page = 1; draw(); });
       const nb = el.querySelector('[data-new]'); if (nb) nb.onclick = () => P.form();
       list.addEventListener('click', async e => {
         const b = e.target.closest('[data-act]'); if (!b) return;
@@ -45,13 +45,13 @@
         else if (a === 'vos') SC.pages.os.open(o.osId);
         else if (a === 'del' && await SC.confirm(`Excluir o orçamento <b>#${SC.pad(o.numero)}</b>? Esta ação não pode ser desfeita.`, { danger: true, ok: 'Excluir' })) {
           SC.db.orcamentos = SC.db.orcamentos.filter(x => x.id !== id);
-          SC.log('orcamento', `Orçamento #${SC.pad(o.numero)} excluído`); SC.save(); SC.toast('Orçamento excluído.'); SC.refresh();
+          SC.log('orcamento', `Orçamento #${SC.pad(o.numero)} excluído`); if (!await SC.save()) return; SC.toast('Orçamento excluído.'); SC.refresh();
         }
       });
-      list.addEventListener('change', e => {
+      list.addEventListener('change', async e => {
         const s = e.target.closest('[data-status]'); if (!s) return;
         const o = SC.byId('orcamentos', s.closest('tr').dataset.id), old = o.status;
-        o.status = s.value; SC.log('orcamento', `Orçamento #${SC.pad(o.numero)}: ${old} → ${o.status}`); SC.save(); SC.toast(`Orçamento #${SC.pad(o.numero)} ${o.status.toLowerCase()}.`); SC.refresh();
+        o.status = s.value; SC.log('orcamento', `Orçamento #${SC.pad(o.numero)}: ${old} → ${o.status}`); if (!await SC.save()) return; SC.toast(`Orçamento #${SC.pad(o.numero)} ${o.status.toLowerCase()}.`); SC.refresh();
       });
     },
     open(id) { const o = SC.byId('orcamentos', id); if (o) P.form(o); },
@@ -93,7 +93,7 @@
       };
       body.addEventListener('input', upd); body.addEventListener('focusout', upd); upd();
       body.querySelector('form').addEventListener('submit', e => e.preventDefault());
-      const save = print => {
+      const save = async print => {
         const v = SC.vals(body), err = msg => { SC.toast(msg, 'err'); return false; };
         if (!v.c_nome.trim()) return err('Informe o nome do cliente.');
         if (!SC.validDoc(v.c_doc)) return err('CPF/CNPJ inválido. Confira os números ou deixe em branco.');
@@ -108,7 +108,7 @@
         });
         if (isNew) SC.db.orcamentos.unshift(base);
         SC.log('orcamento', `Orçamento #${SC.pad(base.numero)} ${isNew ? 'criado' : 'atualizado'} – ${c.nome}`);
-        SC.save(); m.close(); SC.refresh(); SC.toast(`Orçamento #${SC.pad(base.numero)} salvo.`);
+        if (!await SC.save()) return; m.close(); SC.refresh(); SC.toast(`Orçamento #${SC.pad(base.numero)} salvo.`);
         if (print) SC.print.orc(base.id);
         return true;
       };

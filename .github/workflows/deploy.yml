@@ -1,5 +1,9 @@
 name: CI/CD Pipeline
 
+concurrency:
+  group: smartcenter-${{ github.ref }}
+  cancel-in-progress: false
+
 on:
   push:
     branches: [ main ]
@@ -15,13 +19,32 @@ jobs:
       - name: Checkout do código
         uses: actions/checkout@v4
 
-      - name: Configurar Node.js 22 LTS
+      - name: Configurar Node.js 24 LTS
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
 
       - name: Executar testes de concorrência e idempotência
         run: npm test
+
+      - name: Validar imagem, API e persistência Docker
+        run: |
+          docker build -t smartcenter-ci .
+          docker volume create smartcenter-ci-data
+          docker run -d --name smartcenter-ci --mount source=smartcenter-ci-data,target=/app/data -e INITIAL_ADMIN_PASSWORD=ci-initial-password smartcenter-ci
+          for attempt in $(seq 1 30); do
+            if docker exec smartcenter-ci node -e "fetch('http://127.0.0.1:3000/api/status').then(r=>process.exit(r.status===200?0:1)).catch(()=>process.exit(1))"; then break; fi
+            sleep 1
+          done
+          docker exec smartcenter-ci node -e "const {DatabaseSync}=require('node:sqlite');const d=new DatabaseSync(process.env.DB_PATH);d.prepare('INSERT OR REPLACE INTO config(key,value) VALUES(?,?)').run('ci_marker','true')"
+          docker rm -f smartcenter-ci
+          docker run -d --name smartcenter-ci --mount source=smartcenter-ci-data,target=/app/data smartcenter-ci
+          for attempt in $(seq 1 30); do
+            if docker exec smartcenter-ci node -e "fetch('http://127.0.0.1:3000/api/status').then(r=>process.exit(r.status===200?0:1)).catch(()=>process.exit(1))"; then break; fi
+            sleep 1
+          done
+          docker exec smartcenter-ci node -e "const {DatabaseSync}=require('node:sqlite');const d=new DatabaseSync(process.env.DB_PATH);if(d.prepare('SELECT value FROM config WHERE key=?').get('ci_marker').value!=='true')process.exit(1)"
+          docker exec smartcenter-ci node -e "Promise.all([['/api/db',401],['/smartcenter.db',404],['/server.js',404]].map(async([p,s])=>{if((await fetch('http://127.0.0.1:3000'+p)).status!==s)process.exit(1)})).catch(()=>process.exit(1))"
 
   deploy:
     name: 🚀 Deploy Automático na VPS3
@@ -51,11 +74,5 @@ jobs:
               git reset --hard origin/main
             fi
 
-            echo "Construindo e iniciando container Docker na porta 8093..."
-            docker compose up -d --build --remove-orphans
-
-            echo "Aguardando inicialização..."
-            sleep 4
-            docker compose ps
-            echo "Deploy concluído com sucesso!"
+            sh scripts/deploy.sh
 

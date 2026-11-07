@@ -1,51 +1,35 @@
-SMARTCENTER - SISTEMA DE GESTÃO PARA ASSISTÊNCIA TÉCNICA
-Versão 1.3 · Com Docker, SQLite nativo e proteção de Idempotência
+SMARTCENTER 2.0 - GESTÃO PARA ASSISTÊNCIA TÉCNICA
 
-========================================================================
-COMO SUBIR NA SUA VPS (DOCKER / DOCKER COMPOSE)
-========================================================================
+Documentação completa: README.md
 
-Ideal para deixar o sistema online 24/7 para seu pai poder acessar de
-qualquer computador, celular ou tablet pela internet!
+WINDOWS
+Instale Node.js 24 ou superior e execute iniciar.bat.
+Acesso local: http://localhost:3000
 
-1. Na sua VPS (Ubuntu/Debian com Docker instalado), envie os arquivos do sistema.
-2. Dentro da pasta do projeto, execute:
-   docker compose up -d --build
+PRIMEIRO ACESSO
+Instalações novas: o terminal exibe uma senha aleatória para o login admin.
+A troca é obrigatória. Não existe mais a senha padrão admin/admin.
+Contas antigas podem entrar com a senha atual e devem trocá-la no primeiro acesso.
 
-3. Pronto! O sistema já estará rodando em segundo plano.
-   - Para acessar: http://IP_DA_SUA_VPS:3000
-   - Reinício automático: se a VPS reiniciar, o container sobe sozinho (restart: unless-stopped).
-   - Persistência dos dados: o banco SQLite fica salvo na pasta local "./data" da VPS.
-   - Fazer backup na VPS: basta copiar o arquivo "./data/smartcenter.db".
+DADOS
+Os dados ficam no servidor SQLite. Não abra index.html diretamente.
+Todos os computadores devem acessar o mesmo servidor.
+O arquivo .key ao lado do banco protege segredos dos aparelhos e deve ser preservado.
 
-Para parar ou reiniciar:
-   docker compose restart
-   docker compose down
+DOCKER
+Instalação nova: docker compose up -d --build --wait --wait-timeout 90
+Porta pública padrão: http://IP_DO_SERVIDOR:8093
+Dados persistentes no volume smartcenter-data, em /app/data.
 
-========================================================================
-COMO USAR NO COMPUTADOR LOCAL (WINDOWS)
-========================================================================
+ATUALIZAÇÃO DE CONTAINER ANTIGO
+Use sh scripts/deploy.sh para preservar e transferir o banco antes de substituir
+o container antigo. Consulte README.md antes de atualizar uma instalação existente.
 
-OPÇÃO 1: COM BANCO DE DADOS SQLITE (RECOMENDADO PARA REDE LOCAL)
-1. Dê dois cliques no arquivo "iniciar.bat".
-2. O servidor iniciará o banco SQLite e abrirá o navegador em http://localhost:3000.
-3. Para usar em outros aparelhos da loja (mesmo Wi-Fi), acesse o IP exibido no terminal.
+BACKUP
+Use a tela de backup como administrador ou npm.cmd run backup.
+Não copie somente o arquivo principal de um banco ativo em WAL.
+Veja no README.md como preservar a chave e recuperar o banco.
 
-OPÇÃO 2: MODO NAVEGADOR (SEM SERVIDOR)
-- Dê dois cliques em "index.html".
-- Os dados ficam salvos no navegador (localStorage).
-
-========================================================================
-PRIMEIRO ACESSO E CONFIGURAÇÕES
-========================================================================
-- Usuário inicial: admin
-- Senha inicial: admin
-- Troque a senha no menu do usuário após o primeiro acesso.
-- Em "Configurações da loja", cadastre o nome, telefone, endereço e logotipo.
-
-========================================================================
-CHECKLIST DE ENTRADA E SENHA DO APARELHO
-========================================================================
-- A OS tem suporte a senha do aparelho (padrão desenhado 3x3 em SVG ou PIN/alfanumérica).
-- Checklist de entrada com 18 itens de inspeção rápida para Celular e Tablet (OK, Defeito, N/T).
-- Impressão otimizada em folha A4 com checklist e visualização do desenho do padrão.
+TESTES
+npm.cmd test
+Os testes usam bancos isolados e não alteram o banco da loja.

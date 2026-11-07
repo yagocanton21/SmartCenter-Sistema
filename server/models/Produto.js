@@ -21,6 +21,10 @@ class Produto {
   /* Baixa atômica de estoque com verificação direta no banco */
   static baixarEstoqueAtomico(dbInstance, produtoId, qtd) {
     const db = dbInstance || getDatabase();
+    require('./validation').number(qtd, 'Quantidade', 0.000001, 1e6);
+    const product = Produto.getById(produtoId);
+    if (!product || !product.ativo) throw new Error('Produto inexistente ou inativo.');
+    if (!product.controla) return false;
     const stmt = db.prepare(`
       UPDATE produtos 
       SET estoque = estoque - ? 
@@ -49,6 +53,10 @@ class Produto {
   /* Estorno atômico de estoque */
   static estornarEstoqueAtomico(dbInstance, produtoId, qtd) {
     const db = dbInstance || getDatabase();
+    require('./validation').number(qtd, 'Quantidade', 0.000001, 1e6);
+    const product = Produto.getById(produtoId);
+    if (!product) throw new Error('Produto do estorno não encontrado.');
+    if (!product.controla) return false;
     const stmt = db.prepare(`
       UPDATE produtos 
       SET estoque = estoque + ? 
@@ -95,6 +103,12 @@ class Produto {
 
   static upsert(produto) {
     const db = getDatabase();
+    const { number } = require('./validation');
+    require('./validation').id(produto.id);
+    if (!produto.id || !String(produto.nome || '').trim()) throw new Error('Nome e ID do produto obrigatórios.');
+    for (const key of ['preco', 'custo', 'estoqueMin']) number(produto[key] ?? 0, key);
+    number(produto.estoque ?? 0, 'Estoque');
+    if (!produto.codigo) produto.codigo = 'P' + String(require('./StoreConfig').nextSequence('produto')).padStart(4, '0');
     const stmt = db.prepare(`
       INSERT INTO produtos (id, codigo, nome, categoria, custo, preco, controla, estoque, estoqueMin, ativo, data)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)

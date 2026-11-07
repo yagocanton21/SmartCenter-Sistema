@@ -38,7 +38,7 @@
         else if (b.dataset.act === 'del') {
           const h = hist(id);
           if (h.os.length + h.vendas.length + h.orc.length) return SC.toast('Este cliente possui histórico (OS, vendas ou orçamentos) e não pode ser excluído.', 'err');
-          if (await SC.confirm(`Excluir o cliente <b>${esc(c.nome)}</b>?`, { danger: true, ok: 'Excluir' })) { SC.db.clientes = SC.db.clientes.filter(x => x.id !== id); SC.log('cliente', `Cliente excluído: ${c.nome}`); SC.save(); SC.toast('Cliente excluído.'); SC.refresh(); }
+          if (await SC.confirm(`Excluir o cliente <b>${esc(c.nome)}</b>?`, { danger: true, ok: 'Excluir' })) { SC.db.clientes = SC.db.clientes.filter(x => x.id !== id); SC.log('cliente', `Cliente excluído: ${c.nome}`); if (!await SC.save()) return; SC.toast('Cliente excluído.'); SC.refresh(); }
         }
       });
     },
@@ -80,7 +80,7 @@
         footer: `<button type="button" class="btn" data-close>Cancelar</button><button type="button" class="btn primary" data-save>Salvar cliente</button>`
       });
       m.body.querySelector('form').addEventListener('submit', e => e.preventDefault());
-      m.el.querySelector('[data-save]').onclick = () => {
+      m.el.querySelector('[data-save]').onclick = async () => {
         const v = SC.vals(m.body);
         if (!v.nome.trim()) return SC.toast('Informe o nome do cliente.', 'err');
         if (!SC.validDoc(v.doc)) return SC.toast('CPF/CNPJ inválido. Confira os números.', 'err');
@@ -89,7 +89,7 @@
         const base = c || { id: SC.uid(), criadoEm: SC.nowISO() };
         Object.assign(base, { nome: v.nome.trim(), telefone: v.telefone, whatsapp: v.whatsapp || v.telefone, doc: v.doc, email: v.email.trim(), cep: v.cep, cidade: v.cidade.trim(), endereco: v.endereco.trim(), obs: v.obs.trim() });
         if (isNew) SC.db.clientes.push(base);
-        SC.log('cliente', `Cliente ${isNew ? 'cadastrado' : 'atualizado'}: ${base.nome}`); SC.save(); m.close(); SC.refresh(); SC.toast('Cliente salvo.');
+        SC.log('cliente', `Cliente ${isNew ? 'cadastrado' : 'atualizado'}: ${base.nome}`); if (!await SC.save()) return; m.close(); SC.refresh(); SC.toast('Cliente salvo.');
       };
     }
   });

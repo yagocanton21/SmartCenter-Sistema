@@ -13,8 +13,8 @@
 
   /* ---------- Login ---------- */
   SC.boot = () => {
-    const uid = SC.session.get();
-    const u = uid && SC.db.users.find(x => x.id === uid && x.ativo);
+    const u = SC.user;
+    if (u?.mustChangePassword) { showLogin(); SC.changePassword(); return; }
     if (u) { SC.user = u; SC.renderShell(); route(); } else showLogin();
   };
   function showLogin(msg) {
@@ -36,16 +36,20 @@
       <button class="btn primary" type="submit" style="padding:11px">Entrar</button></form></div></div>`;
     const themeBtn = root().querySelector('[data-theme-btn]');
     if (themeBtn) themeBtn.onclick = () => SC.toggleTheme();
-    root().querySelector('#lf').addEventListener('submit', e => {
+    root().querySelector('#lf').addEventListener('submit', async e => {
       e.preventDefault();
-      const v = SC.vals(e.target), u = SC.db.users.find(x => x.login === v.login.trim().toLowerCase() && x.senha === SC.hash(v.senha));
-      if (!u) return showLogin('Usuário ou senha incorretos.');
-      if (!u.ativo) return showLogin('Este usuário está inativo. Fale com o administrador.');
-      SC.session.set(u.id); SC.user = u; SC.log('sistema', 'Login realizado'); SC.save(); SC.renderShell(); route();
+      const v = SC.vals(e.target);
+      try {
+        const session = await SC.api('/api/auth/login', { method: 'POST', body: JSON.stringify({ login: v.login, password: v.senha }) });
+        SC.csrf = session.csrf; SC.user = session.user;
+        await SC.load(); SC.boot();
+      } catch (error) { showLogin(error.message); }
     });
   }
-  SC.logout = () => {
-    SC.session.set(null);
+  SC.logout = async () => {
+    try { await SC.api('/api/auth/logout', { method: 'POST', body: '{}' }); } catch (error) { SC.toast(error.message, 'err'); return; }
+    SC.db = SC.defaults(); SC.csrf = null;
+    await SC.load();
     SC.user = null;
     current = null;
     try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { location.hash = ''; }
@@ -58,12 +62,14 @@
       body: `<div class="grid"><label class="f s12"><span>Senha atual</span><input type="password" name="a" autocomplete="current-password"></label><label class="f s12"><span>Nova senha</span><input type="password" name="n" autocomplete="new-password"></label><label class="f s12"><span>Repita a nova senha</span><input type="password" name="r" autocomplete="new-password"></label></div>`,
       footer: `<button type="button" class="btn" data-close>Cancelar</button><button type="button" class="btn primary" data-ok>Salvar senha</button>`
     });
-    m.el.querySelector('[data-ok]').onclick = () => {
+    m.el.querySelector('[data-ok]').onclick = async () => {
       const v = SC.vals(m.body);
-      if (SC.hash(v.a) !== SC.user.senha) return SC.toast('A senha atual está incorreta.', 'err');
-      if (v.n.length < 4) return SC.toast('A nova senha deve ter ao menos 4 caracteres.', 'err');
+      if (v.n.length < 10) return SC.toast('A nova senha deve ter ao menos 10 caracteres.', 'err');
       if (v.n !== v.r) return SC.toast('As senhas digitadas não conferem.', 'err');
-      SC.user.senha = SC.hash(v.n); SC.log('usuario', 'Senha alterada'); SC.save(); m.close(); SC.toast('Senha alterada.'); SC.refresh();
+      try {
+        const result = await SC.api('/api/auth/password', { method: 'POST', body: JSON.stringify({ currentPassword: v.a, password: v.n }) });
+        SC.user = result.user; await SC.load(); m.close(); SC.boot(); SC.toast('Senha alterada.');
+      } catch (error) { SC.toast(error.message, 'err'); }
     };
   };
 
@@ -75,7 +81,7 @@
     root().innerHTML = `<div class="app">
       <aside class="side" id="side"><div class="brand"><div class="brand-mark">${c.logo ? `<img src="${c.logo}" alt="">` : 'SC'}</div><div><b>${esc(c.nomeFantasia)}</b><small>Assistência técnica</small></div></div>
         <nav class="nav" aria-label="Menu principal">${NAV.map(n => n.g ? (NAV.slice(NAV.indexOf(n) + 1).some(x => SC.can(x.k)) ? `<h6>${n.g}</h6>` : '') : (SC.can(n.k) ? `<a data-nav="${n.k}" tabindex="0" role="link">${icon(n.i)} ${n.n}</a>` : '')).join('')}</nav>
-        <div class="side-foot"><div>SmartCenter · v1.0</div><small class="db-pill ${SC.storage.isSQLite ? 'pill-sqlite' : 'pill-local'}" title="${SC.storage.isSQLite ? 'Conectado ao arquivo smartcenter.db' : 'Dados salvos no navegador'}">${SC.storage.isSQLite ? '🟢 SQLite Ativo' : '💾 Banco Local'}</small></div></aside><div class="scrim" id="scrim"></div>
+        <div class="side-foot"><div>SmartCenter · v2.0</div><small class="db-pill ${SC.storage.isSQLite ? 'pill-sqlite' : 'pill-local'}" title="${SC.storage.isSQLite ? 'Conectado ao arquivo smartcenter.db' : 'Dados salvos no navegador'}">${SC.storage.isSQLite ? '🟢 SQLite Ativo' : '💾 Banco Local'}</small></div></aside><div class="scrim" id="scrim"></div>
       <div class="main"><header class="top"><button class="btn ghost icon menu-btn" id="menu" aria-label="Abrir menu">${icon('menu')}</button>
         <div class="gsearch">${icon('search', 16)}<input type="search" id="gs" placeholder="Buscar…" autocomplete="off"><div class="gs-list" id="gsl" hidden></div></div><div class="spacer"></div>
         <button type="button" class="btn ghost icon theme-btn" data-theme-btn data-size="18" title="${isDark ? 'Alternar para Modo Claro' : 'Alternar para Modo Escuro'}" aria-label="Alternar tema">${icon(isDark ? 'sun' : 'moon', 18)}</button>
@@ -161,5 +167,8 @@
     });
   }
 
-  document.addEventListener('DOMContentLoaded', async () => { await SC.load(); SC.boot(); });
+  document.addEventListener('DOMContentLoaded', async () => {
+    try { await SC.load(); SC.boot(); }
+    catch (error) { root().textContent = error.message; }
+  });
 })();

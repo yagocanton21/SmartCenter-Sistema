@@ -40,10 +40,10 @@
           if (!v.nomeFantasia.trim()) return SC.toast('Informe o nome fantasia.', 'err');
           if (v.cnpj && !SC.validDoc(v.cnpj)) return SC.toast('CNPJ inválido. Confira os números.', 'err');
           Object.assign(SC.db.config, { nomeFantasia: v.nomeFantasia.trim(), razaoSocial: v.razaoSocial.trim(), cnpj: v.cnpj, telefone: v.telefone, whatsapp: v.whatsapp, cep: v.cep, endereco: v.endereco.trim(), cidade: v.cidade.trim(), email: v.email.trim(), responsavel: v.responsavel.trim(), garantiaPadraoDias: Math.max(0, parseInt(v.garantiaPadraoDias) || 0), condicoesPagamento: v.condicoesPagamento.trim(), termoGarantia: v.termoGarantia.trim() ? v.termoGarantia : SC.TERMO_PADRAO, logo });
-          SC.log('sistema', 'Configurações da loja atualizadas'); SC.save(); SC.toast('Configurações salvas.'); SC.renderShell();
+          SC.log('sistema', 'Configurações da loja atualizadas'); if (!await SC.save()) return; SC.toast('Configurações salvas.'); SC.renderShell();
         }
       });
-      el.querySelector('#lfile').addEventListener('change', e => {
+      el.querySelector('#lfile').addEventListener('change', async e => {
         const file = e.target.files[0]; if (!file) return;
         const rd = new FileReader();
         rd.onload = () => {
@@ -78,7 +78,7 @@
         else {
           if (u.id === SC.user.id) return SC.toast('Você não pode excluir o próprio usuário.', 'err');
           if (u.perfil === 'admin' && SC.db.users.filter(x => x.perfil === 'admin' && x.ativo).length <= 1) return SC.toast('É necessário manter ao menos um administrador ativo.', 'err');
-          if (await SC.confirm(`Excluir o usuário <b>${esc(u.nome)}</b>?`, { danger: true, ok: 'Excluir' })) { SC.db.users = SC.db.users.filter(x => x.id !== u.id); SC.log('usuario', `Usuário excluído: ${u.nome}`); SC.save(); SC.toast('Usuário excluído.'); SC.refresh(); }
+          if (await SC.confirm(`Excluir o usuário <b>${esc(u.nome)}</b>?`, { danger: true, ok: 'Excluir' })) { SC.db.users = SC.db.users.filter(x => x.id !== u.id); SC.log('usuario', `Usuário excluído: ${u.nome}`); if (!await SC.save()) return; SC.toast('Usuário excluído.'); SC.refresh(); }
         }
       });
     },
@@ -95,22 +95,22 @@
         footer: `<button type="button" class="btn" data-close>Cancelar</button><button type="button" class="btn primary" data-save>Salvar usuário</button>`
       });
       const body = m.body;
-      body.querySelector('[name=perfil]').addEventListener('change', e => { const p = SC.PERFIS[e.target.value].perms; body.querySelectorAll('[data-perm]').forEach(c => { c.checked = p.includes(c.dataset.perm); }); });
+      body.querySelector('[name=perfil]').addEventListener('change', async e => { const p = SC.PERFIS[e.target.value].perms; body.querySelectorAll('[data-perm]').forEach(c => { c.checked = p.includes(c.dataset.perm); }); });
       body.querySelector('form').addEventListener('submit', e => e.preventDefault());
-      m.el.querySelector('[data-save]').onclick = () => {
+      m.el.querySelector('[data-save]').onclick = async () => {
         const v = SC.vals(body), login = v.login.trim().toLowerCase();
         if (!v.nome.trim() || !login) return SC.toast('Informe o nome e o login.', 'err');
         if (SC.db.users.some(x => x.id !== (u && u.id) && x.login === login)) return SC.toast('Este login já está em uso.', 'err');
-        if (isNew && v.senha.length < 4) return SC.toast('A senha deve ter ao menos 4 caracteres.', 'err');
-        if (v.senha && v.senha.length < 4) return SC.toast('A senha deve ter ao menos 4 caracteres.', 'err');
+        if (isNew && v.senha.length < 10) return SC.toast('A senha deve ter ao menos 10 caracteres.', 'err');
+        if (v.senha && v.senha.length < 10) return SC.toast('A senha deve ter ao menos 10 caracteres.', 'err');
         const perms = [...body.querySelectorAll('[data-perm]')].filter(c => c.checked).map(c => c.dataset.perm);
         if (u && u.id === SC.user.id && (!v.ativo || v.perfil !== 'admin') && SC.db.users.filter(x => x.perfil === 'admin' && x.ativo).length <= 1) return SC.toast('Você é o único administrador ativo. Mantenha seu perfil e acesso.', 'err');
         const base = u || { id: SC.uid() };
         Object.assign(base, { nome: v.nome.trim(), login, perfil: v.perfil, perms, ativo: v.ativo });
-        if (v.senha) base.senha = SC.hash(v.senha);
+        if (v.senha) base.password = v.senha;
         if (isNew) SC.db.users.push(base);
         if (SC.user.id === base.id) SC.user = base;
-        SC.log('usuario', `Usuário ${isNew ? 'criado' : 'atualizado'}: ${base.nome}`); SC.save(); m.close(); SC.refresh(); SC.renderShell(); SC.toast('Usuário salvo.');
+        SC.log('usuario', `Usuário ${isNew ? 'criado' : 'atualizado'}: ${base.nome}`); if (!await SC.save()) return; m.close(); SC.refresh(); SC.renderShell(); SC.toast('Usuário salvo.');
       };
     }
   });
@@ -122,7 +122,7 @@
     title: 'Backup',
     render(el) {
       const db = SC.db, kb = Math.round(JSON.stringify(db).length / 1024), ub = db.config.ultimoBackup;
-      el.innerHTML = `<div class="page-head"><div><h1>Backup e restauração</h1><p>Os dados ficam salvos neste navegador. Guarde cópias de segurança em outro lugar.</p></div></div>
+      el.innerHTML = `<div class="page-head"><div><h1>Backup e restauração</h1><p>Os dados ficam salvos no servidor. Guarde cópias de segurança em outro lugar.</p></div></div>
         <div class="cols2">
         <div class="card"><div class="card-h"><h3>Fazer backup</h3></div><div class="card-b"><p>Baixa um arquivo <b>.json</b> com todos os dados: clientes, OS, orçamentos, vendas, produtos, usuários e configurações.</p>
           <p class="hint">Último backup: <b>${ub ? SC.fmtDT(ub) : 'nunca'}</b> · Tamanho dos dados: ${kb} KB · ${db.clientes.length} clientes, ${db.os.length} OS, ${db.orcamentos.length} orçamentos, ${db.vendas.length} vendas, ${db.produtos.length} produtos.</p>
@@ -131,25 +131,25 @@
         <div class="card"><div class="card-h"><h3>Exportar planilhas (CSV)</h3></div><div class="card-b"><p class="hint">Abre no Excel e no Google Planilhas.</p><div class="head-actions"><button class="btn" data-csv="clientes">Clientes</button><button class="btn" data-csv="os">Ordens de serviço</button><button class="btn" data-csv="vendas">Vendas</button><button class="btn" data-csv="produtos">Produtos</button></div></div></div>
         <div class="card"><div class="card-h"><h3>Dados de teste e limpeza</h3></div><div class="card-b"><p class="hint">Carregue exemplos para conhecer o sistema ou apague tudo para começar a usar de verdade.</p><div class="head-actions"><button class="btn" id="demo">Carregar dados de demonstração</button><button class="btn danger" id="reset">${icon('trash', 16)} Apagar todos os dados</button></div></div></div>
         </div>
-        <p class="hint" style="margin-top:14px">Armazenamento do navegador: <b>${SC.storage.ok ? 'funcionando' : 'indisponível (modo privado ou bloqueado)'}</b>. Para usar em mais de um computador, faça o backup e restaure no outro.</p>`;
-      el.querySelector('#bk').onclick = () => {
-        SC.db.config.ultimoBackup = SC.nowISO(); SC.log('backup', 'Backup completo gerado'); SC.save();
-        SC.download(`backup-smartcenter-${SC.today()}.json`, JSON.stringify(SC.db)); SC.toast('Backup gerado. Guarde o arquivo em local seguro.'); SC.refresh();
+        <p class="hint" style="margin-top:14px">Armazenamento do navegador: <b>${SC.storage.ok ? 'funcionando' : 'indisponível (modo privado ou bloqueado)'}</b>. Todos os computadores devem acessar o mesmo servidor.</p>`;
+      el.querySelector('#bk').onclick = async () => {
+        SC.db.config.ultimoBackup = SC.nowISO(); SC.log('backup', 'Backup completo gerado'); if (!await SC.save()) return;
+        SC.download(`backup-smartcenter-${SC.today()}.json`, JSON.stringify(await SC.api('/api/backup'))); SC.toast('Backup gerado. Guarde o arquivo em local seguro.'); SC.refresh();
       };
       el.querySelector('#rb').onclick = () => el.querySelector('#rfile').click();
-      el.querySelector('#rfile').addEventListener('change', e => {
+      el.querySelector('#rfile').addEventListener('change', async e => {
         const file = e.target.files[0]; if (!file) return;
         const rd = new FileReader();
         rd.onload = async () => {
           let d; try { d = JSON.parse(rd.result); } catch (x) { return SC.toast('Arquivo inválido: não é um backup do SmartCenter.', 'err'); }
           if (!d || !d.config || !Array.isArray(d.clientes) || !Array.isArray(d.os) || !Array.isArray(d.users)) return SC.toast('Arquivo inválido: não é um backup do SmartCenter.', 'err');
           if (await SC.confirm(`Restaurar o backup <b>${esc(file.name)}</b> (${d.clientes.length} clientes, ${d.os.length} OS, ${(d.vendas || []).length} vendas)? Todos os dados atuais serão substituídos.`, { danger: true, ok: 'Restaurar' })) {
-            SC.storage.write(d); SC.load(); SC.session.set(null); SC.user = null; SC.toast('Backup restaurado. Entre novamente.'); SC.boot();
+            try { await SC.restore(d); SC.toast('Backup restaurado. Entre novamente.'); } catch (error) { SC.toast(error.message, 'err'); }
           }
         };
         rd.readAsText(file);
       });
-      el.querySelectorAll('[data-csv]').forEach(b => b.onclick = () => {
+      el.querySelectorAll('[data-csv]').forEach(b => b.onclick = async () => {
         const k = b.dataset.csv; let head, rows;
         if (k === 'clientes') { head = ['Nome', 'Telefone', 'WhatsApp', 'E-mail', 'CPF/CNPJ', 'CEP', 'Endereço', 'Cidade']; rows = db.clientes.map(c => [c.nome, c.telefone, c.whatsapp, c.email, c.doc, c.cep, c.endereco, c.cidade]); }
         if (k === 'os') { head = ['Nº', 'Entrada', 'Cliente', 'Aparelho', 'IMEI/Série', 'Defeito', 'Status', 'Mão de obra', 'Peças', 'Total', 'Prazo', 'Entrega']; rows = db.os.map(o => [SC.pad(o.numero), SC.fmtDate(o.dataEntrada), SC.cliOf(o).nome, (o.aparelho.marca + ' ' + o.aparelho.modelo).trim(), o.aparelho.imei, o.aparelho.defeito, o.status, SC.fmtNum(o.maoDeObra), SC.fmtNum(o.valorPecas), SC.fmtNum(o.total), SC.fmtDate(o.prazo), o.dataEntrega ? SC.fmtDate(o.dataEntrega) : '']); }
@@ -157,16 +157,16 @@
         if (k === 'produtos') { head = ['Código', 'Produto', 'Categoria', 'Custo', 'Venda', 'Estoque', 'Mínimo']; rows = db.produtos.map(p => [p.codigo, p.nome, p.categoria, SC.fmtNum(p.custo), SC.fmtNum(p.preco), p.controla ? p.estoque : '', p.estoqueMin]); }
         SC.download(`${k}-${SC.today()}.csv`, toCSV(head, rows), 'text/csv;charset=utf-8');
       });
-      el.querySelector('#demo').onclick = async () => { if (await SC.confirm('Adicionar clientes, produtos, OS, vendas e um orçamento de exemplo aos dados atuais?', { ok: 'Adicionar exemplos' })) { SC.loadDemo(); SC.save(); SC.toast('Dados de demonstração adicionados.'); SC.go('dashboard'); } };
-      el.querySelector('#reset').onclick = () => {
+      el.querySelector('#demo').onclick = async () => { if (await SC.confirm('Adicionar clientes, produtos, OS, vendas e um orçamento de exemplo aos dados atuais?', { ok: 'Adicionar exemplos' })) { SC.loadDemo(); if (!await SC.save()) return; SC.toast('Dados de demonstração adicionados.'); SC.go('dashboard'); } };
+      el.querySelector('#reset').onclick = async () => {
         const m = SC.modal({
           title: 'Apagar todos os dados', size: 'sm',
           body: `<p class="confirm-msg">Isto apaga <b>clientes, OS, orçamentos, vendas, produtos, usuários e configurações</b> e não pode ser desfeito. Faça um backup antes.</p><label class="f" style="margin-top:12px"><span>Digite APAGAR para confirmar</span><input id="rtxt" autocomplete="off"></label>`,
           footer: `<button type="button" class="btn" data-close>Cancelar</button><button type="button" class="btn danger" data-ok>Apagar tudo</button>`
         });
-        m.el.querySelector('[data-ok]').onclick = () => {
+        m.el.querySelector('[data-ok]').onclick = async () => {
           if (m.el.querySelector('#rtxt').value.trim().toUpperCase() !== 'APAGAR') return SC.toast('Digite APAGAR para confirmar.', 'err');
-          SC.storage.clear(); SC.db = SC.defaults(); SC.save(); SC.session.set(null); SC.user = null; m.close(); SC.toast('Todos os dados foram apagados.'); SC.boot();
+          try { const data = SC.defaults(); const backup = await SC.api('/api/backup'); data.users = backup.users.filter(u => u.id === SC.user.id); await SC.restore(data); m.close(); SC.toast('Dados operacionais apagados. Entre novamente.'); } catch (error) { SC.toast(error.message, 'err'); }
         };
       };
     }

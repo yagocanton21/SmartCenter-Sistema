@@ -18,8 +18,29 @@ class Venda {
   /* Criação de venda 100% transacional e atômica: numeração sequencial + baixa de estoque + chave de idempotência */
   static criarVendaTransacional(venda, idempotencyKey, requestHash) {
     const db = getDatabase();
-    db.exec('BEGIN IMMEDIATE;');
+    const nested = db.isTransaction;
+    if (!nested) db.exec('BEGIN IMMEDIATE;');
     try {
+      const { lines, number, round } = require('./validation');
+      require('./validation').id(venda.id);
+      venda.data ||= new Date().toISOString();
+      require('./validation').dates(venda, ['data']);
+      if (!venda.id || !Array.isArray(venda.itens) || !venda.itens.length) throw new Error('Venda sem ID ou sem itens.');
+      venda.subtotal = lines(venda.itens, 'preco');
+      let custo = 0;
+      for (const item of venda.itens) {
+        const p = item.produtoId && Produto.getById(item.produtoId);
+        if (item.produtoId && (!p || !p.ativo)) throw new Error('Produto inexistente ou inativo.');
+        item.custo = p ? Number(p.custo || 0) : 0;
+        custo += item.qtd * item.custo;
+      }
+      const discountValue = number(venda.descontoValor ?? 0, 'Desconto');
+      if (venda.descontoTipo === 'percent' && discountValue > 100) throw new Error('Desconto percentual inválido.');
+      venda.desconto = round(venda.descontoTipo === 'percent' ? venda.subtotal * discountValue / 100 : discountValue);
+      if (venda.desconto > venda.subtotal) throw new Error('Desconto maior que o subtotal.');
+      venda.total = round(venda.subtotal - venda.desconto);
+      venda.lucro = round(venda.total - custo);
+      delete venda.numero;
       // 1. Gera número sequencial atômico pelo banco se não foi definido
       if (!venda.numero) {
         venda.numero = StoreConfig.nextSequence('venda');
@@ -30,12 +51,11 @@ class Venda {
       const baixas = [];
       for (const item of itens) {
         if (item.produtoId) {
-          Produto.baixarEstoqueAtomico(db, item.produtoId, item.qtd);
-          baixas.push({ produtoId: item.produtoId, qtd: item.qtd });
+          if (Produto.baixarEstoqueAtomico(db, item.produtoId, item.qtd)) baixas.push({ produtoId: item.produtoId, qtd: item.qtd });
         }
       }
       venda.baixa = baixas;
-      venda.status = venda.status || 'Concluída';
+      venda.status = 'Concluída';
 
       // 3. Grava o registro da venda
       const stmt = db.prepare('INSERT INTO vendas (id, numero, status, data) VALUES (?, ?, ?, ?);');
@@ -44,16 +64,13 @@ class Venda {
       // 4. Salva a chave de idempotência dentro da mesma transação atômica
       if (idempotencyKey) {
         const respBody = JSON.stringify({ ok: true, venda });
-        db.prepare(`
-          INSERT INTO idempotency_keys (key, endpoint, request_hash, response_status, response_body, created_at)
-          VALUES (?, '/api/vendas', ?, 201, ?, ?);
-        `).run(idempotencyKey, requestHash || '', respBody, new Date().toISOString());
+        require('./Idempotency').save(db, idempotencyKey, '/api/vendas', requestHash || '', 201, respBody);
       }
 
-      db.exec('COMMIT;');
+      if (!nested) db.exec('COMMIT;');
       return venda;
     } catch (err) {
-      db.exec('ROLLBACK;');
+      if (!nested) db.exec('ROLLBACK;');
       throw err;
     }
   }
@@ -61,11 +78,12 @@ class Venda {
   /* Cancelamento transacional da venda com devolução de estoque */
   static cancelarVendaTransacional(vendaId) {
     const db = getDatabase();
-    db.exec('BEGIN IMMEDIATE;');
+    const nested = db.isTransaction;
+    if (!nested) db.exec('BEGIN IMMEDIATE;');
     try {
       const venda = Venda.getById(vendaId);
       if (!venda) throw new Error('Venda não encontrada');
-      if (venda.status === 'Cancelada') throw new Error('Esta venda já está cancelada');
+      if (venda.status === 'Cancelada') { if (!nested) db.exec('COMMIT;'); return venda; }
 
       // Estorna estoque dos itens
       if (Array.isArray(venda.baixa)) {
@@ -82,10 +100,10 @@ class Venda {
         vendaId
       );
 
-      db.exec('COMMIT;');
+      if (!nested) db.exec('COMMIT;');
       return venda;
     } catch (err) {
-      db.exec('ROLLBACK;');
+      if (!nested) db.exec('ROLLBACK;');
       throw err;
     }
   }

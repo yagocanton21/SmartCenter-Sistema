@@ -26,7 +26,7 @@ function getFullDatabase() {
   return {
     hasData,
     db: {
-      versao: 1,
+      versao: 2,
       criadoEm: config._criadoEm || new Date().toISOString(),
       config,
       seq,

@@ -8,4 +8,10 @@ test/
 scratch/
 iniciar.bat
 README.md
+.env
+*.key
+*.bak
+backups/
+.tools/
+RELATORIO-TECNICO.md
 
