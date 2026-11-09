@@ -32,6 +32,15 @@
   const p2 = n => String(n).padStart(2, '0');
   SC.esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   SC.uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  SC.uuid = () => {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      try { return crypto.randomUUID(); } catch (e) {}
+    }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+      const r = (Math.random() * 16) | 0;
+      return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+    });
+  };
   SC.pad = (n, l = 6) => String(n).padStart(l, '0');
   SC.r2 = n => Math.round((Number(n) || 0) * 100) / 100;
   const nf = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });

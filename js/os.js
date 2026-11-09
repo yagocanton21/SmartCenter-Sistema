@@ -88,7 +88,7 @@
     open(id) { const o = SC.byId('os', id); if (o) P.form(o); },
 
     form(os, pre) {
-      const idempotencyKey = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ('idemp_os_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9));
+      const idempotencyKey = SC.uuid ? SC.uuid() : ('idemp_os_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9));
       const isNew = !os, o = os || pre || {}, ap = o.aparelho || {};
       const cli = o.clienteId ? (SC.byId('clientes', o.clienteId) || o.cliSnap || {}) : (o.cliSnap || {});
       const status = o.status || 'Recebido';

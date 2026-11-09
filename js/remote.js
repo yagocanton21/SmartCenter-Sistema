@@ -69,7 +69,8 @@
           if (JSON.stringify(displayedBefore) !== JSON.stringify(after)) changes.push({ entity: 'config', id, before, after });
         }
         if (!changes.length) return true;
-        pending = { body: JSON.stringify({ changes }), key: crypto.randomUUID(), local: JSON.stringify(SC.db) };
+        const key = (SC.uuid ? SC.uuid() : ('key_' + Date.now() + '_' + Math.random().toString(36).slice(2)));
+        pending = { body: JSON.stringify({ changes }), key, local: JSON.stringify(SC.db) };
       }
       const result = await SC.api('/api/changes', { method: 'POST', headers: { 'Idempotency-Key': pending.key }, body: pending.body });
       pending = null; adopt(result.db); SC.storage.ok = true;

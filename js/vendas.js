@@ -71,7 +71,7 @@
     },
 
     form() {
-      const idempotencyKey = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ('idemp_v_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9));
+      const idempotencyKey = SC.uuid ? SC.uuid() : ('idemp_v_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9));
       const m = SC.modal({
         title: 'Nova venda', size: 'xl',
         body: `<form class="grid" autocomplete="off">

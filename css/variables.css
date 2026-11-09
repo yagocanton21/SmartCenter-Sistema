@@ -11,12 +11,14 @@
   --blue: #1c6ee8;
   --blue-d: #1354b8;
   --sky: #e7f0fe;
+  --ring: rgba(28, 110, 232, 0.22);
 
   /* Superfícies e Tipografia */
-  --bg: #f2f5fa;
+  --bg: #f3f6fb;
   --card: #ffffff;
   --card-hover: #f8fbff;
   --line: #cbd5e1;
+  --line-light: #e2e8f0;
   --text: #0f172a;
   --mut: #475569;
 
@@ -32,9 +34,11 @@
   --r: 10px;
   --r-sm: 6px;
   --r-lg: 14px;
-  --sh: 0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.06);
-  --sh-lg: 0 12px 34px rgba(0, 0, 0, 0.18);
-  --transition: all 0.18s ease;
+  --sh-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --sh: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 14px rgba(0, 0, 0, 0.05);
+  --sh-md: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --sh-lg: 0 14px 38px rgba(0, 0, 0, 0.16), 0 4px 12px rgba(0, 0, 0, 0.08);
+  --transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 [data-theme="dark"] {
@@ -45,12 +49,14 @@
   --blue: #3b82f6;
   --blue-d: #2563eb;
   --sky: #1e293b;
+  --ring: rgba(59, 130, 246, 0.3);
 
   /* Superfícies e Tipografia */
   --bg: #0b1120;
   --card: #151e32;
   --card-hover: #1c2740;
   --line: #26354d;
+  --line-light: #1f2d42;
   --text: #f8fafc;
   --mut: #94a3b8;
 
@@ -63,7 +69,8 @@
   --bad-bg: #450a0a;
 
   /* Elementos de Interface */
-  --sh: 0 2px 8px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3);
-  --sh-lg: 0 16px 40px rgba(0, 0, 0, 0.5);
+  --sh-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --sh: 0 2px 8px rgba(0, 0, 0, 0.35), 0 8px 24px rgba(0, 0, 0, 0.25);
+  --sh-md: 0 4px 16px rgba(0, 0, 0, 0.45);
+  --sh-lg: 0 18px 46px rgba(0, 0, 0, 0.55);
 }
-
