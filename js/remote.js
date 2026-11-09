@@ -6,8 +6,6 @@
   const clone = value => JSON.parse(JSON.stringify(value));
   let baseline, pending, saving = false, owner;
   SC.storage.isSQLite = true;
-  SC.storage.clear = () => { throw new Error('Use a restauração autenticada.'); };
-  SC.storage.write = () => { throw new Error('Use Salvar para confirmar a gravação.'); };
   SC.api = async (path, options = {}) => {
     const headers = { ...options.headers };
     if (options.body) headers['Content-Type'] = 'application/json';

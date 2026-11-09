@@ -1,0 +1,259 @@
+/* ==========================================================================
+   SmartCenter - Formulários, Grids e Seletores
+   ========================================================================== */
+
+/* Grid de Formulário de 12 Colunas */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 12px 14px;
+}
+
+.s1  { grid-column: span 1; }
+.s2  { grid-column: span 2; }
+.s3  { grid-column: span 3; }
+.s4  { grid-column: span 4; }
+.s5  { grid-column: span 5; }
+.s6  { grid-column: span 6; }
+.s7  { grid-column: span 7; }
+.s8  { grid-column: span 8; }
+.s9  { grid-column: span 9; }
+.s12 { grid-column: span 12; }
+
+/* Campos e Rótulos */
+.f {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.f > span,
+.lbl {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.req {
+  color: var(--bad);
+}
+
+.sec {
+  font-size: 12px;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+  color: var(--blue);
+  font-weight: 800;
+  padding-top: 8px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 6px;
+  margin-top: 4px;
+}
+
+.sec:first-child {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+/* Campos de Saída (Readonly / Resultados) */
+.out {
+  display: block;
+  padding: 9px 11px;
+  background: var(--bg);
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.out.big {
+  font-size: 20px;
+  color: var(--text);
+  background: var(--sky);
+  border-color: var(--blue);
+}
+
+/* Picker de Itens / Autocomplete */
+.picker {
+  position: relative;
+}
+
+.picker-row {
+  display: flex;
+  gap: 8px;
+}
+
+.picker-list {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  margin-top: 4px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+  z-index: 5;
+  max-height: 240px;
+  overflow: auto;
+}
+
+.picker-list button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  padding: 9px 12px;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.picker-list button:hover {
+  background: var(--sky);
+}
+
+.picker-list small {
+  margin-left: 8px;
+  color: var(--mut);
+}
+
+.picker-empty {
+  padding: 12px;
+  color: var(--mut);
+}
+
+/* Tabela de Linhas de Peças / Itens */
+.lines-tbl input {
+  padding: 7px 9px;
+}
+
+.lines-tbl th {
+  padding: 8px 8px;
+}
+
+.lines-tbl td {
+  padding: 6px 8px;
+}
+
+.lines-tbl td:nth-child(2) { width: 84px; }
+.lines-tbl td:nth-child(3) { width: 130px; }
+.lines-tbl td:nth-child(4) { width: 120px; }
+.lines-tbl td:last-child    { width: 44px; }
+
+.lines .btn {
+  margin-top: 8px;
+}
+
+/* Grid de Permissões */
+.perm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 8px;
+}
+
+.chk {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.chk input {
+  width: auto;
+}
+
+.hint {
+  font-size: 12.5px;
+  color: var(--mut);
+  font-weight: 500;
+}
+
+/* Pares Chave-Valor (Exibição de Detalhes) */
+.kv {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px 18px;
+}
+
+.kv div span {
+  display: block;
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--mut);
+  font-weight: 800;
+}
+
+.kv div b {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.kv .wide {
+  grid-column: 1 / -1;
+}
+
+/* Upload e Pré-visualização de Logo */
+.logo-box {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.logo-prev {
+  width: 110px;
+  height: 80px;
+  border: 1px dashed var(--line);
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  background: var(--card);
+  overflow: hidden;
+  color: var(--mut);
+  font-size: 12px;
+  text-align: center;
+}
+
+.logo-prev img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.cols2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 14px;
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.summary div span {
+  display: block;
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--mut);
+  font-weight: 800;
+}
+
+.summary div b {
+  font-size: 18px;
+  color: var(--text);
+  font-weight: 800;
+}
+

@@ -1,0 +1,63 @@
+/* ==========================================================================
+   SmartCenter - Base, Reset e Utilitários Globais
+   ========================================================================== */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font: 14px/1.45 'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+}
+
+body.modal-open {
+  overflow: hidden;
+}
+
+h1, h2, h3, h4 {
+  margin: 0;
+  line-height: 1.2;
+  color: var(--text);
+  font-weight: 800;
+}
+
+button, input, select, textarea {
+  font: inherit;
+  color: inherit;
+}
+
+small {
+  color: var(--mut);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Utilitários */
+.ic {
+  flex: none;
+  vertical-align: middle;
+}
+
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.mut {
+  color: var(--mut);
+}
+
+[hidden] {
+  display: none !important;
+}
+

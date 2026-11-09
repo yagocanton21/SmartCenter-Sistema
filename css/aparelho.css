@@ -1,0 +1,249 @@
+/* ==========================================================================
+   SmartCenter - Aparelho (Senha, Padrão de Desbloqueio e Checklist)
+   ========================================================================== */
+
+/* Caixa de Senha / PIN / Padrão */
+.passbox {
+  display: grid;
+  grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
+  gap: 12px 16px;
+  align-items: start;
+}
+
+.passbox .pass-pad {
+  grid-column: 1 / -1;
+}
+
+.passbox [hidden] {
+  display: none !important;
+}
+
+/* Canvas de Padrão Android (Pattern Lock) */
+.pat-wrap {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.pat {
+  width: 150px;
+  height: 150px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #f5f8fd;
+  cursor: crosshair;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.pat svg {
+  display: block;
+}
+
+.pat-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.pat-info small {
+  color: var(--mut);
+}
+
+/* Checklist de Entrada / Saída */
+.ckwrap[hidden] {
+  display: none !important;
+}
+
+.ck-tools {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.ck-tools .hint {
+  flex: 1 1 220px;
+  color: var(--mut);
+  font-size: 12px;
+}
+
+.ck-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 18px;
+}
+
+.ck-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.ck-l {
+  font-weight: 600;
+  font-size: 13.5px;
+  color: var(--text);
+}
+
+.ck-opts {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.ck-o {
+  cursor: pointer;
+  position: relative;
+}
+
+.ck-o input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ck-o span {
+  display: inline-block;
+  min-width: 54px;
+  text-align: center;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--card);
+  color: var(--mut);
+  transition: all 0.15s ease;
+}
+
+.ck-o input:checked + span {
+  color: #fff;
+}
+
+.ck-ok input:checked + span {
+  background: #14804a;
+  border-color: #14804a;
+}
+
+.ck-def input:checked + span {
+  background: #c62828;
+  border-color: #c62828;
+}
+
+.ck-nt input:checked + span {
+  background: #5b6b82;
+  border-color: #5b6b82;
+}
+
+.ck-o input:focus-visible + span {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+/* Impressão Checklist e Acesso (no documento impresso) */
+.acc-pat {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.box-b .k.acc {
+  grid-column: span 12;
+}
+
+.ckp-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px 12px;
+  margin-top: 3px;
+}
+
+.ckp-i {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+  font-size: 7.6pt;
+  border-bottom: 1px dotted #b9c5d8;
+  padding: 1px 0;
+}
+
+.ckp-i i {
+  font-style: normal;
+}
+
+.ckp-i b {
+  font-size: 7pt;
+}
+
+.ckp-def b { color: #c62828; }
+.ckp-ok b  { color: #14804a; }
+.ckp-nt b  { color: #6b7a90; }
+
+.ckp-obs {
+  margin: 4px 0 0;
+  font-size: 8pt;
+}
+
+.acc-row {
+  display: flex;
+  gap: 14px;
+  padding: 5px 9px;
+  align-items: flex-start;
+}
+
+.acc-row .acc {
+  flex: 0 0 auto;
+  max-width: 150px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.acc-row span,
+.ckp > span {
+  font-size: 7pt;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: #5b6b82;
+  display: block;
+}
+
+.acc-row .acc b {
+  font-size: 9pt;
+  overflow-wrap: anywhere;
+}
+
+.acc-pat b {
+  font-size: 8pt;
+}
+
+.ckp {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Dark Mode Overrides para Aparelho e Checklist */
+[data-theme="dark"] .pat {
+  background: #182235;
+  border-color: var(--line);
+}
+
+[data-theme="dark"] .ck-o span {
+  background: #1e293b;
+  border-color: var(--line);
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .ck-nt input:checked + span {
+  background: #475569;
+  border-color: #475569;
+}
+

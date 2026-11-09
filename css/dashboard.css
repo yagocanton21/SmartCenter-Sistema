@@ -1,0 +1,215 @@
+/* ==========================================================================
+   SmartCenter - Dashboard (Estatísticas, Gráficos em Barra e Feeds)
+   ========================================================================== */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(235px, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.stat {
+  display: flex;
+  gap: 13px;
+  align-items: center;
+  text-align: left;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 15px;
+  box-shadow: var(--sh);
+  cursor: pointer;
+  width: 100%;
+}
+
+.stat:hover {
+  border-color: var(--blue);
+}
+
+.stat-ic {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: var(--sky);
+  color: var(--blue);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.stat.t-warn .stat-ic {
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+
+.stat.t-ok .stat-ic {
+  background: var(--ok-bg);
+  color: var(--ok);
+}
+
+.stat.t-navy .stat-ic {
+  background: var(--navy);
+  color: #fff;
+}
+
+.stat small {
+  display: block;
+  color: var(--mut);
+  font-weight: 700;
+}
+
+.stat b {
+  display: block;
+  font-size: 22px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+  font-weight: 800;
+}
+
+.stat em {
+  font-style: normal;
+  font-size: 12px;
+  color: var(--mut);
+  font-weight: 600;
+}
+
+.dash-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+/* Gráfico de Barras Verticais */
+.bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 180px;
+  padding-top: 10px;
+}
+
+.bar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  height: 100%;
+  min-width: 0;
+}
+
+.bar i {
+  display: block;
+  width: 100%;
+  background: var(--blue);
+  border-radius: 4px 4px 0 0;
+  min-height: 2px;
+}
+
+.bar.today i {
+  background: var(--text);
+}
+
+.bar small {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--mut);
+  font-weight: 700;
+}
+
+/* Gráfico de Barras Horizontais */
+.hbar {
+  display: grid;
+  grid-template-columns: 150px 1fr 34px;
+  gap: 10px;
+  align-items: center;
+  margin: 9px 0;
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.hbar div {
+  height: 9px;
+  border-radius: 9px;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.hbar i {
+  display: block;
+  height: 100%;
+  background: var(--blue);
+  border-radius: 9px;
+}
+
+.hbar b {
+  text-align: right;
+  color: var(--text);
+}
+
+/* Feeds e Alertas */
+.feed {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.feed li {
+  display: flex;
+  gap: 11px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+}
+
+.feed li:last-child {
+  border: 0;
+}
+
+.feed .dot {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--sky);
+  color: var(--blue);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.feed p {
+  margin: 0;
+}
+
+.alerts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+}
+
+.alert {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--warn-bg);
+  color: var(--warn);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.alert.ok {
+  background: var(--ok-bg);
+  color: var(--ok);
+}
+
+.alert button {
+  margin-left: auto;
+}
+

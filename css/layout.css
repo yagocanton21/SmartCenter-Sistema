@@ -1,0 +1,394 @@
+/* ==========================================================================
+   SmartCenter - Layout do Sistema (Sidebar, Topbar, Navegação)
+   ========================================================================== */
+
+.app {
+  display: grid;
+  grid-template-columns: 248px minmax(0, 1fr);
+  min-height: 100%;
+}
+
+/* Barra Lateral (Sidebar) */
+.side {
+  background: linear-gradient(180deg, #071526 0%, #040b14 100%);
+  color: #c5d7ef;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  z-index: 40;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 18px 18px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.brand-mark {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--blue);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 15px;
+  overflow: hidden;
+  flex: none;
+}
+
+.brand-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #fff;
+}
+
+.brand b {
+  display: block;
+  color: #fff;
+  font-size: 16px;
+  letter-spacing: 0.2px;
+  font-weight: 800;
+}
+
+.brand small {
+  color: #9fc0ea;
+  font-weight: 600;
+}
+
+/* Itens de Navegação */
+.nav {
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.nav h6 {
+  margin: 14px 10px 6px;
+  font-size: 11px;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+  color: #85a8d9;
+  font-weight: 800;
+}
+
+.nav a {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: #c5d7ef;
+  text-decoration: none;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.nav a:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.nav a.on {
+  background: var(--blue);
+  color: #fff;
+}
+
+.side-foot {
+  padding: 12px 18px 16px;
+  font-size: 11px;
+  color: #85a8d9;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.db-pill {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+
+.pill-sqlite {
+  background: #0e462f;
+  color: #6ee7b7;
+  border: 1px solid rgba(110, 231, 183, 0.3);
+}
+
+.pill-local {
+  background: #452807;
+  color: #fcd34d;
+  border: 1px solid rgba(252, 211, 77, 0.3);
+}
+
+.scrim {
+  display: none;
+}
+
+/* Área Principal e Cabeçalho Superior */
+.main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.top {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 24px;
+}
+
+[data-theme="dark"] .top {
+  background: #151e32;
+}
+
+.menu-btn {
+  display: none;
+}
+
+/* Busca Global */
+.gsearch {
+  position: relative;
+  flex: 1;
+  max-width: 520px;
+  min-width: 0;
+}
+
+.gsearch > svg {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--mut);
+}
+
+.gsearch input {
+  width: 100%;
+  min-width: 0;
+  padding: 8px 12px 8px 34px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--bg);
+  color: var(--text);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  transition: all 0.15s ease;
+}
+
+.gsearch input:focus {
+  background: var(--card);
+  border-color: var(--blue);
+}
+
+.gs-list {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: var(--sh-lg);
+  max-height: 65vh;
+  overflow: auto;
+  z-index: 50;
+}
+
+[data-theme="dark"] .gs-list {
+  background: #151e32;
+}
+
+.gs-list h6 {
+  margin: 0;
+  padding: 8px 12px 4px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--mut);
+  font-weight: 800;
+}
+
+.gs-list button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  padding: 8px 12px;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.gs-list button:hover {
+  background: var(--sky);
+}
+
+.gs-list button small {
+  display: block;
+  color: var(--mut);
+}
+
+.gs-empty {
+  padding: 14px;
+  color: var(--mut);
+}
+
+.spacer {
+  flex: 1;
+}
+
+/* Botões da Topbar e Menu do Usuário */
+.theme-btn {
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+}
+
+.theme-btn:hover {
+  background: var(--sky);
+}
+
+.usermenu {
+  position: relative;
+}
+
+.ubtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  padding: 3px 11px 3px 3px;
+  cursor: pointer;
+  color: var(--text);
+  transition: all 0.15s ease;
+}
+
+.ubtn:hover {
+  background: var(--sky);
+  border-color: var(--blue);
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--blue);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  flex: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+
+.avatar svg {
+  color: #fff;
+}
+
+[data-theme="dark"] .ubtn {
+  background: #1c273c;
+  border-color: #2f405c;
+}
+
+[data-theme="dark"] .ubtn:hover {
+  background: #23324c;
+  border-color: var(--blue);
+}
+
+[data-theme="dark"] .avatar {
+  background: #3b82f6;
+  color: #fff;
+}
+
+.ubtn .uinfo {
+  text-align: left;
+  line-height: 1.2;
+}
+
+.ubtn .uinfo b {
+  color: var(--text);
+  font-size: 12.5px;
+  display: block;
+}
+
+.ubtn .uinfo small {
+  display: block;
+  color: var(--mut);
+  font-size: 10.5px;
+}
+
+.umenu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  min-width: 190px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: var(--sh-lg);
+  padding: 6px;
+  z-index: 50;
+}
+
+[data-theme="dark"] .umenu {
+  background: #151e32;
+}
+
+.umenu button {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  width: 100%;
+  background: none;
+  border: 0;
+  padding: 9px 10px;
+  border-radius: 7px;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text);
+  font-weight: 600;
+  transition: background 0.12s ease;
+}
+
+.umenu button:hover {
+  background: var(--sky);
+}
+
+/* Área de Conteúdo */
+#view {
+  padding: 24px;
+  max-width: 1440px;
+  width: 100%;
+}
+
+.banner {
+  margin: 16px 24px 0;
+  padding: 11px 14px;
+  border-radius: 9px;
+  background: var(--warn-bg);
+  color: var(--warn);
+  font-weight: 700;
+}
+

@@ -13,13 +13,6 @@ class Cliente {
     return row ? JSON.parse(row.data) : null;
   }
 
-  static getByDoc(doc) {
-    if (!doc) return null;
-    const db = getDatabase();
-    const row = db.prepare('SELECT data FROM clientes WHERE trim(doc) = trim(?)').get(doc);
-    return row ? JSON.parse(row.data) : null;
-  }
-
   static salvarCliente(cliente) {
     const db = getDatabase();
     if (!cliente.id || !String(cliente.nome || '').trim()) throw new Error('Nome e ID do cliente obrigatórios.');

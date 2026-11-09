@@ -1,0 +1,110 @@
+/* ==========================================================================
+   SmartCenter - Tela de Autenticação (Login)
+   ========================================================================== */
+
+.login {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  position: relative;
+  background: radial-gradient(1200px 600px at 20% -10%, #18457e 0, transparent 60%), linear-gradient(160deg, #071526, #030a13);
+}
+
+[data-theme="dark"] .login {
+  background: radial-gradient(1200px 600px at 20% -10%, #172a4d 0, transparent 60%), linear-gradient(160deg, #050912, #02050a);
+}
+
+.login-topbar {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  z-index: 20;
+}
+
+.theme-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.15) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+  color: #ffffff !important;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 13px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.theme-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.28) !important;
+  border-color: rgba(255, 255, 255, 0.6) !important;
+  color: #ffffff !important;
+}
+
+.theme-toggle-btn svg,
+.theme-toggle-btn span {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 32px 28px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+  border: 1px solid transparent;
+}
+
+[data-theme="dark"] .login-card {
+  background: #151e32;
+  border-color: var(--line);
+}
+
+.login-card .brand {
+  padding: 0 0 18px;
+  border: 0;
+}
+
+.login-card .brand b {
+  color: #000;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+[data-theme="dark"] .login-card .brand b {
+  color: #fff;
+}
+
+.login-card .brand small {
+  color: #1e293b;
+  font-weight: 700;
+  font-size: 12.5px;
+}
+
+[data-theme="dark"] .login-card .brand small {
+  color: #94a3b8;
+}
+
+.login-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.login-err {
+  background: var(--bad-bg);
+  color: var(--bad);
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-weight: 700;
+}
+

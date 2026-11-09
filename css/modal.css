@@ -1,0 +1,120 @@
+/* ==========================================================================
+   SmartCenter - Modais, Diálogos de Confirmação e Toasts
+   ========================================================================== */
+
+/* Fundo Escurecido do Modal */
+.modal-back {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 4vh 14px;
+  overflow: auto;
+  z-index: 100;
+}
+
+/* Caixa do Modal */
+.modal {
+  background: var(--card);
+  border-radius: 12px;
+  width: 100%;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  max-height: none;
+  border: 1px solid var(--line);
+}
+
+.m-sm { max-width: 440px; }
+.m-md { max-width: 720px; }
+.m-lg { max-width: 940px; }
+.m-xl { max-width: 1100px; }
+
+.modal header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+  background: var(--navy);
+  color: #fff;
+  border-radius: 12px 12px 0 0;
+}
+
+.modal header h3 {
+  font-size: 16px;
+  color: #fff;
+}
+
+.modal header .btn {
+  color: #fff;
+  background: transparent;
+  border: 0;
+}
+
+.modal header .btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.modal-body {
+  padding: 18px;
+  color: var(--text);
+  -webkit-overflow-scrolling: touch;
+}
+
+.modal footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 12px 18px;
+  border-top: 1px solid var(--line);
+  background: var(--bg);
+  border-radius: 0 0 12px 12px;
+}
+
+.confirm-msg {
+  margin: 0;
+  font-size: 15px;
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* Notificações Flutuantes (Toasts) */
+#toasts {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 300;
+}
+
+.toast {
+  background: var(--navy);
+  color: #fff;
+  padding: 11px 16px;
+  border-radius: 9px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  font-weight: 700;
+  max-width: 360px;
+  transition: 0.3s;
+}
+
+.toast.err {
+  background: var(--bad);
+}
+
+.toast.warn {
+  background: #a86400;
+}
+
+.toast.out {
+  opacity: 0;
+  transform: translateY(8px);
+}
+

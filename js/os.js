@@ -148,18 +148,6 @@
         if (base) { old = base.status; estorna(base); }
         else base = { id: SC.uid(), numero: SC.nextNum('os'), historico: [], baixaEstoque: [], estoqueBaixado: false, orcamentoId: o.orcamentoId || null };
 
-        // Validação de estoque para status Concluído ou Entregue
-        if (!SC.storage.isSQLite && FIM.includes(v.status)) {
-          const need = {};
-          pecas.forEach(i => { if (i.produtoId) need[i.produtoId] = (need[i.produtoId] || 0) + i.qtd; });
-          for (const pid in need) {
-            const p = SC.byId('produtos', pid);
-            if (p && p.controla && p.estoque < need[pid]) {
-              if (base && old) SC.osApplyStatus(base, null);
-              return err(`Estoque insuficiente de "${p.nome}": disponível ${p.estoque}, necessário ${need[pid]}.`);
-            }
-          }
-        }
         Object.assign(base, {
           dataEntrada: v.dataEntrada + 'T' + ((os && os.dataEntrada ? os.dataEntrada.slice(11, 19) : SC.nowISO().slice(11, 19)) || '00:00:00'),
           clienteId: c.id, cliSnap: SC.snap(c),

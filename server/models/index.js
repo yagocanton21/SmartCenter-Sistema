@@ -41,30 +41,6 @@ function getFullDatabase() {
   };
 }
 
-function saveFullDatabase(fullDb) {
-  if (!fullDb || typeof fullDb !== 'object') throw new Error('Dados inválidos para persistência.');
-  const db = getDatabase();
-
-  db.exec('BEGIN TRANSACTION;');
-  try {
-    if (fullDb.config) StoreConfig.saveConfig(fullDb.config);
-    if (fullDb.seq) StoreConfig.saveSequences(fullDb.seq);
-    if (fullDb.users) Usuario.saveAll(fullDb.users);
-    if (fullDb.clientes) Cliente.saveAll(fullDb.clientes);
-    if (fullDb.produtos) Produto.saveAll(fullDb.produtos);
-    if (fullDb.os) OS.saveAll(fullDb.os);
-    if (fullDb.orcamentos) Orcamento.saveAll(fullDb.orcamentos);
-    if (fullDb.vendas) Venda.saveAll(fullDb.vendas);
-    if (fullDb.log) Log.saveAll(fullDb.log);
-
-    db.exec('COMMIT;');
-    return true;
-  } catch (err) {
-    db.exec('ROLLBACK;');
-    throw err;
-  }
-}
-
 module.exports = {
   StoreConfig,
   Usuario,
@@ -75,7 +51,6 @@ module.exports = {
   Venda,
   Log,
   Idempotency,
-  getFullDatabase,
-  saveFullDatabase
+  getFullDatabase
 };
 
