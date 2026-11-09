@@ -72,12 +72,21 @@
   color: var(--text);
   white-space: nowrap;
   text-decoration: none;
-  transition: all 0.15s ease;
+  box-shadow: var(--sh-sm);
+  transition: var(--transition);
+  user-select: none;
 }
 
 .btn:hover {
   background: var(--sky);
   border-color: #bcd2f5;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+}
+
+.btn:active {
+  transform: translateY(0);
+  box-shadow: var(--sh-sm);
 }
 
 .btn:focus-visible,
@@ -86,19 +95,22 @@ input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
 .stat:focus-visible {
-  outline: 2px solid var(--blue);
-  outline-offset: 1px;
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--ring);
 }
 
 .btn.primary {
   background: var(--blue);
   border-color: var(--blue);
   color: #fff;
+  box-shadow: 0 2px 6px rgba(28, 110, 232, 0.28);
 }
 
 .btn.primary:hover {
   background: var(--blue-d);
   border-color: var(--blue-d);
+  box-shadow: 0 4px 12px rgba(28, 110, 232, 0.38);
 }
 
 .btn.navy {
@@ -190,18 +202,21 @@ textarea:focus-visible,
 input, select, textarea {
   border: 1px solid var(--line);
   border-radius: 8px;
-  padding: 9px 11px;
+  padding: 9px 12px;
   background: var(--card);
   color: var(--text);
   font-weight: 600;
   min-width: 0;
   width: 100%;
-  transition: border-color 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  transition: var(--transition);
 }
 
 input:focus, select:focus, textarea:focus {
   border-color: var(--blue);
   background: var(--card);
+  box-shadow: 0 0 0 3px var(--ring);
+  outline: none;
 }
 
 input::placeholder, textarea::placeholder {
@@ -222,6 +237,7 @@ input[type="checkbox"] {
 .table-wrap {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  border-radius: var(--r);
 }
 
 .tbl {
@@ -236,7 +252,7 @@ input[type="checkbox"] {
   color: var(--mut);
   font-weight: 800;
   text-align: left;
-  padding: 10px 14px;
+  padding: 11px 14px;
   background: var(--bg);
   border-bottom: 1px solid var(--line);
   white-space: nowrap;
@@ -247,11 +263,15 @@ input[type="checkbox"] {
 }
 
 .tbl td {
-  padding: 11px 14px;
+  padding: 12px 14px;
   border-bottom: 1px solid var(--line);
   vertical-align: middle;
   color: var(--text);
   font-weight: 500;
+}
+
+.tbl tbody tr {
+  transition: background-color 0.12s ease;
 }
 
 .tbl td b {
