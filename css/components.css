@@ -367,12 +367,20 @@ input[type="checkbox"] {
 /* Seletor Rápido de Status na Tabela */
 .status-sel {
   width: auto;
-  padding: 5px 26px 5px 10px;
+  padding: 5px 26px 5px 12px;
   border-radius: 99px;
   font-weight: 800;
   font-size: 12.5px;
-  border: 0;
+  border: 1px solid transparent;
   cursor: pointer;
+  transition: var(--transition);
+}
+
+.status-sel option {
+  background-color: var(--card);
+  color: var(--text);
+  font-weight: 700;
+  padding: 8px 12px;
 }
 
 .s-recebido {
@@ -423,6 +431,69 @@ input[type="checkbox"] {
 .s-recusado {
   background: var(--bad-bg);
   color: var(--bad);
+}
+
+/* Overrides de Alto Contraste para Status no Dark Mode */
+[data-theme="dark"] .status-sel option {
+  background-color: #1e293b;
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .s-recebido {
+  background: #1e3a5f;
+  color: #bfdbfe;
+  border-color: rgba(147, 197, 253, 0.2);
+}
+
+[data-theme="dark"] .s-analise {
+  background: #1e293b;
+  color: #93c5fd;
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+[data-theme="dark"] .s-aprovacao {
+  background: #451a03;
+  color: #fde047;
+  border-color: rgba(253, 224, 71, 0.3);
+}
+
+[data-theme="dark"] .s-pecas {
+  background: #431407;
+  color: #fdba74;
+  border-color: rgba(253, 186, 116, 0.3);
+}
+
+[data-theme="dark"] .s-reparo {
+  background: #2e1065;
+  color: #ddd6fe;
+  border-color: rgba(221, 214, 254, 0.3);
+}
+
+[data-theme="dark"] .s-concluido {
+  background: #064e3b;
+  color: #6ee7b7;
+  border-color: rgba(110, 231, 183, 0.3);
+}
+
+[data-theme="dark"] .s-entregue {
+  background: #0f172a;
+  color: #f8fafc;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .s-pendente {
+  background: #451a03;
+  color: #fde047;
+}
+
+[data-theme="dark"] .s-aprovado {
+  background: #064e3b;
+  color: #6ee7b7;
+}
+
+[data-theme="dark"] .s-recusado {
+  background: #450a0a;
+  color: #fca5a5;
 }
 
 /* Abas (Tabs) */
