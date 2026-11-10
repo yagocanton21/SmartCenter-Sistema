@@ -3,7 +3,7 @@
   'use strict';
   const SC = window.SC, esc = SC.esc, icon = SC.icon;
   const NAV = [
-    { k: 'dashboard', n: 'Painel', i: 'home' }, { k: 'os', n: 'Ordens de serviço', i: 'wrench' }, { k: 'orcamentos', n: 'Orçamentos', i: 'file' },
+    { k: 'dashboard', n: 'Painel', i: 'home' }, { k: 'os', n: 'Ordens de serviço', i: 'wrench' }, { k: 'notas', n: 'Nota de serviços', i: 'receipt' }, { k: 'orcamentos', n: 'Orçamentos', i: 'file' },
     { k: 'vendas', n: 'Vendas', i: 'cart' }, { k: 'produtos', n: 'Produtos e estoque', i: 'box' }, { k: 'clientes', n: 'Clientes', i: 'users' },
     { g: 'Administração' },
     { k: 'config', n: 'Configurações', i: 'settings' }, { k: 'usuarios', n: 'Usuários', i: 'shield' }, { k: 'backup', n: 'Backup', i: 'database' }

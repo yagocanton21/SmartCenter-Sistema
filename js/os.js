@@ -48,7 +48,7 @@
           return `<tr data-id="${o.id}"><td><b>#${SC.pad(o.numero)}</b></td><td>${SC.fmtDate(o.dataEntrada)}</td><td>${esc(c.nome)}<small>${esc(c.telefone || '')}</small></td><td>${esc([a.marca, a.modelo].filter(Boolean).join(' '))}<small>${esc(a.tipo || '')}${a.imei ? ' · ' + esc(a.imei) : ''}</small></td>
           <td>${edit ? `<select class="status-sel ${SC.statusClass(o.status)}" data-status aria-label="Status da OS ${SC.pad(o.numero)}">${SC.STATUS_OS.map(s => `<option${s === o.status ? ' selected' : ''}>${s}</option>`).join('')}</select>` : SC.badge(o.status, 'b-info')}</td>
           <td>${o.prazo ? SC.fmtDate(o.prazo) : '—'}${late ? ' ' + SC.badge('Atrasada', 'b-bad') : ''}</td><td class="num">${SC.money(o.total)}</td>
-          <td class="actions"><button class="btn ghost icon sm" data-act="edit" title="${edit ? 'Editar' : 'Consultar'}" aria-label="Abrir OS">${icon(edit ? 'edit' : 'eye', 16)}</button><button class="btn ghost icon sm" data-act="print" title="Imprimir" aria-label="Imprimir OS">${icon('print', 16)}</button>${SC.can('excluir') ? `<button class="btn ghost icon sm" data-act="del" title="Excluir" aria-label="Excluir OS">${icon('trash', 16)}</button>` : ''}</td></tr>`;
+          <td class="actions"><button class="btn ghost icon sm" data-act="edit" title="${edit ? 'Editar' : 'Consultar'}" aria-label="Abrir OS">${icon(edit ? 'edit' : 'eye', 16)}</button><button class="btn ghost icon sm" data-act="print" title="Imprimir OS" aria-label="Imprimir OS">${icon('print', 16)}</button><button class="btn ghost icon sm wa-ic" data-act="wa" title="Enviar OS por WhatsApp" aria-label="Enviar OS por WhatsApp">${icon('whats', 16)}</button>${FIM.includes(o.status) && SC.can('notas') ? `<button class="btn ghost icon sm" data-act="nota" title="Nota de serviço (com termo de garantia)" aria-label="Abrir nota de serviço">${icon('receipt', 16)}</button>` : ''}${SC.can('excluir') ? `<button class="btn ghost icon sm" data-act="del" title="Excluir" aria-label="Excluir OS">${icon('trash', 16)}</button>` : ''}</td></tr>`;
         }).join('')}</tbody></table>` : SC.empty('Nenhuma ordem de serviço encontrada.', 'wrench');
       };
       draw();
@@ -60,6 +60,8 @@
         const id = b.closest('tr').dataset.id, o = SC.byId('os', id);
         if (b.dataset.act === 'edit') P.form(o);
         else if (b.dataset.act === 'print') SC.print.os(id);
+        else if (b.dataset.act === 'wa') SC.whats.os(id);
+        else if (b.dataset.act === 'nota') { SC.pages.notas.state.q = SC.pad(o.numero); SC.pages.notas.state.status = ''; SC.pages.notas.state.garantia = ''; SC.pages.notas.state.page = 1; SC.go('notas'); }
         else if (b.dataset.act === 'del' && await SC.confirm(`Excluir a OS <b>#${SC.pad(o.numero)}</b> de ${esc(SC.cliOf(o).nome)}? Esta ação não pode ser desfeita.`, { danger: true, ok: 'Excluir' })) {
           estorna(o);
           SC.db.orcamentos.forEach(q => { if (q.osId === o.id) q.osId = null; });
@@ -115,7 +117,7 @@
           ${f.sel('Forma de pagamento', 'formaPagamento', [['', 'A definir']].concat(SC.PAGAMENTOS.map(p => [p, p])), o.formaPagamento || '', { s: 4 })}
           ${f.area('Observações', 'observacoes', o.observacoes, { s: 8, rows: 2 })}
         </form>`,
-        footer: `<button type="button" class="btn" data-close>Cancelar</button>${isNew ? '' : `<button type="button" class="btn" data-pr>${icon('print', 16)} Imprimir</button>`}<button type="button" class="btn" data-save>Salvar</button><button type="button" class="btn primary" data-savepr>${icon('print', 16)} Salvar e imprimir</button>`
+        footer: `<button type="button" class="btn" data-close>Cancelar</button>${isNew ? '' : `<button type="button" class="btn" data-pr>${icon('print', 16)} Imprimir</button><button type="button" class="btn wa-ic" data-wa>${icon('whats', 16)} WhatsApp</button>`}<button type="button" class="btn" data-save>Salvar</button><button type="button" class="btn primary" data-savepr>${icon('print', 16)} Salvar e imprimir</button>`
       });
       const body = m.body;
       SC.bindClientPicker(body); SC.bindLines(body);
@@ -197,6 +199,7 @@
         if (e.target.closest('[data-save]')) save(false);
         else if (e.target.closest('[data-savepr]')) save(true);
         else if (e.target.closest('[data-pr]')) SC.print.os(os.id);
+        else if (e.target.closest('[data-wa]')) SC.whats.os(os.id);
       });
     }
   });

@@ -390,6 +390,18 @@
   text-align: center;
 }
 
+.paper .box { margin-top: 6px; }
+.paper .box-text { min-height: 16px; padding: 4px 9px; }
+.paper .sigs { margin-top: 22px; }
+.paper .decl { margin-top: 6px; }
+.termo p, .termo li { font-size: 9pt; }
+.termo h3.t-sec { margin: 9px 0 4px; }
+.termo h2.t-main { margin: 8px 0 6px; }
+.paper .totals { margin-top: 6px; }
+.paper .totals div { padding: 2px 9px; }
+.paper .box-b { padding: 5px 9px; gap: 3px 12px; }
+.paper .box-b .k.c12 b { font-size: 8.6pt; }
+
 /* ==========================================================================
    Media Queries para Impressão Física e PDF (@page / @media print)
    ========================================================================== */

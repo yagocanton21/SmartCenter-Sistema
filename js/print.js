@@ -71,32 +71,58 @@
     window.addEventListener('afterprint', () => { /* mantém a visualização aberta */ }, { once: true });
   };
 
-  /* ---------- Ordem de Serviço (+ termo) ---------- */
+  /* ---------- Ordem de Serviço ---------- */
   SC.print.os = id => {
     const o = SC.byId('os', id); if (!o) return;
     const c = SC.cliOf(o), ap = o.aparelho || {}, cfg = SC.db.config;
     const pg1 = `<section class="paper">${head('ORDEM DE SERVIÇO', 'Nº ' + SC.pad(o.numero), 'Entrada: ' + SC.fmtDate(o.dataEntrada))}
       ${cliBox(c)}
-      ${box('Dados do aparelho', grid(k('Tipo', ap.tipo, 'c3') + k('Marca', ap.marca, 'c3') + k('Modelo', ap.modelo, 'c3') + k('IMEI / nº de série', ap.imei, 'c3') + k('Cor', ap.cor, 'c3') + k('Acessórios recebidos', ap.acessorios, 'c9') + k('Estado de conservação', ap.estado, 'c12')))}
+      ${box('Dados do aparelho', grid(k('Tipo', ap.tipo, 'c3') + k('Marca', ap.marca, 'c3') + k('Modelo', ap.modelo, 'c3') + k('IMEI / nº de série', ap.imei, 'c3') + k('Cor', ap.cor, 'c3') + k('Acessórios recebidos', ap.acessorios, 'c4') + k('Estado de conservação', ap.estado, 'c5')))}
       ${box('Defeito relatado pelo cliente', txt(ap.defeito))}
       ${SC.printAparelhoExtra ? SC.printAparelhoExtra(o) : ''}
       ${box('Diagnóstico técnico', txt(o.diagnostico))}
       ${box('Serviços realizados', txt(o.servico))}
-      ${box('Peças utilizadas', linesTable(o.pecas, '—'))}
+      ${box('Peças utilizadas', linesTable(o.pecas, 'Nenhuma peça utilizada.'))}
       <div class="totals"><div><span>Mão de obra</span><b>${SC.money(o.maoDeObra)}</b></div><div><span>Peças</span><b>${SC.money(o.valorPecas)}</b></div><div class="tt"><span>TOTAL</span><span>${SC.money(o.total)}</span></div></div>
       ${box('Entrega, garantia e pagamento', grid(k('Prazo de entrega', SC.fmtDate(o.prazo), 'c3') + k('Garantia', garantiaTxt(o.garantiaDias), 'c3') + k('Status', o.status, 'c3') + k('Forma de pagamento', o.formaPagamento, 'c3') + k('Condições de pagamento', cfg.condicoesPagamento || 'Pagamento à vista (Pix, dinheiro ou débito) ou em até 12x no cartão de crédito, conforme taxas da operadora.\nO aparelho só é entregue mediante pagamento integral do serviço.', 'c12')))}
       ${o.observacoes ? box('Observações', txt(o.observacoes)) : ''}
-      <p class="decl">Declaro que deixei o aparelho acima descrito, nas condições registradas, para análise/reparo, que as informações prestadas são verdadeiras e que li e concordo com o Termo de Garantia da página seguinte.</p>
+      <p class="decl">Declaro que deixei o aparelho acima descrito, nas condições registradas, para análise/reparo, que as informações prestadas são verdadeiras e que o Termo de Garantia será entregue junto com a Nota de Serviço, após a conclusão do reparo.</p>
       <div class="sigs"><div class="sig"><b>${esc(c.nome || 'Cliente')}</b>Assinatura do cliente</div><div class="sig"><b>${esc(cfg.responsavel || cfg.nomeFantasia)}</b>Responsável técnico</div></div>
       ${foot()}</section>`;
-    const vars = { loja: cfg.nomeFantasia || 'SmartCenter', garantia: garantiaTxt(o.garantiaDias), os: SC.pad(o.numero), cliente: c.nome || '', aparelho: [ap.marca, ap.modelo].filter(Boolean).join(' '), data: SC.fmtDate(o.dataEntrada), telefone: cfg.telefone || cfg.whatsapp || '', endereco: [cfg.endereco, cfg.cidade].filter(Boolean).join(', '), cnpj: cfg.cnpj || '' };
-    const pg2 = `<section class="paper">${head('TERMO DE GARANTIA', 'OS ' + SC.pad(o.numero), SC.fmtDate(o.dataEntrada))}
-      <div class="t-ref"><b>Cliente:</b> ${esc(c.nome || '—')} &nbsp;·&nbsp; <b>Aparelho:</b> ${esc(vars.aparelho || '—')} ${ap.imei ? '&nbsp;·&nbsp; <b>IMEI/Série:</b> ' + esc(ap.imei) : ''} &nbsp;·&nbsp; <b>Garantia:</b> ${esc(vars.garantia)}</div>
-      ${termoHTML(cfg.termoGarantia, vars)}
-      <p class="termo-decl">Declaro ter lido e concordado com todas as condições deste Termo de Garantia.</p>
+    SC.print.show(pg1, `OS-${SC.pad(o.numero)}-${slug(c.nome)}`);
+  };
+
+  /* ---------- Nota de Serviço (mesmo número da OS) + Termo de Garantia ---------- */
+  SC.notaInfo = o => {
+    const dias = Number(o.garantiaDias) || 0;
+    const base = String(o.dataEntrega || o.dataConclusao || '').slice(0, 10);
+    const ate = dias > 0 && base ? SC.addDays(base, dias) : '';
+    return { dias, inicio: base, ate, vigente: !!ate && ate >= SC.today() };
+  };
+  SC.print.nota = id => {
+    const o = SC.byId('os', id); if (!o) return;
+    if (!['Concluído', 'Entregue'].includes(o.status)) return SC.toast('A Nota de Serviço só é emitida quando a manutenção estiver Concluída.', 'warn');
+    const c = SC.cliOf(o), ap = o.aparelho || {}, cfg = SC.db.config, g = SC.notaInfo(o);
+    const dConc = String(o.dataConclusao || SC.nowISO()).slice(0, 10);
+    const pg1 = `<section class="paper">${head('NOTA DE SERVIÇO', 'Nº ' + SC.pad(o.numero), 'Ref. OS ' + SC.pad(o.numero) + ' · Concluído em ' + SC.fmtDate(dConc))}
+      ${cliBox(c)}
+      ${box('Dados do aparelho', grid(k('Tipo', ap.tipo, 'c3') + k('Marca', ap.marca, 'c3') + k('Modelo', ap.modelo, 'c3') + k('IMEI / nº de série', ap.imei, 'c3') + k('Entrada', SC.fmtDate(o.dataEntrada), 'c3') + k('Conclusão', SC.fmtDate(dConc), 'c3') + k('Entrega', o.dataEntrega ? SC.fmtDate(o.dataEntrega) : '—', 'c3') + k('Cor', ap.cor, 'c3')))}
+      ${box('Defeito relatado', txt(ap.defeito))}
+      ${box('Serviços realizados', txt(o.servico || o.diagnostico))}
+      ${box('Peças utilizadas', linesTable(o.pecas, 'Nenhuma peça utilizada.'))}
+      <div class="totals"><div><span>Mão de obra</span><b>${SC.money(o.maoDeObra)}</b></div><div><span>Peças</span><b>${SC.money(o.valorPecas)}</b></div><div class="tt"><span>TOTAL</span><span>${SC.money(o.total)}</span></div></div>
+      ${box('Garantia e pagamento', grid(k('Garantia', garantiaTxt(o.garantiaDias), 'c3') + k('Início da garantia', g.inicio ? SC.fmtDate(g.inicio) : '—', 'c3') + k('Válida até', g.ate ? SC.fmtDate(g.ate) : '—', 'c3') + k('Forma de pagamento', o.formaPagamento, 'c3')))}
+      ${o.observacoes ? box('Observações', txt(o.observacoes)) : ''}
+      <p class="decl">Declaro que recebi o aparelho acima descrito, testado e em funcionamento, e que estou ciente das condições do Termo de Garantia da página seguinte.</p>
       <div class="sigs"><div class="sig"><b>${esc(c.nome || 'Cliente')}</b>Assinatura do cliente · Data ____/____/______</div><div class="sig"><b>${esc(cfg.responsavel || cfg.nomeFantasia)}</b>Responsável técnico</div></div>
       ${foot()}</section>`;
-    SC.print.show(pg1 + pg2, `OS-${SC.pad(o.numero)}-${slug(c.nome)}`);
+    const vars = { loja: cfg.nomeFantasia || 'SmartCenter', garantia: garantiaTxt(o.garantiaDias), os: SC.pad(o.numero), cliente: c.nome || '', aparelho: [ap.marca, ap.modelo].filter(Boolean).join(' '), data: SC.fmtDate(g.inicio || dConc), telefone: cfg.telefone || cfg.whatsapp || '', endereco: [cfg.endereco, cfg.cidade].filter(Boolean).join(', '), cnpj: cfg.cnpj || '' };
+    const pg2 = `<section class="paper">${head('TERMO DE GARANTIA', 'Nota ' + SC.pad(o.numero), SC.fmtDate(g.inicio || dConc))}
+      <div class="t-ref"><b>Cliente:</b> ${esc(c.nome || '—')} &nbsp;·&nbsp; <b>Aparelho:</b> ${esc(vars.aparelho || '—')} ${ap.imei ? '&nbsp;·&nbsp; <b>IMEI/Série:</b> ' + esc(ap.imei) : ''} &nbsp;·&nbsp; <b>Garantia:</b> ${esc(vars.garantia)}${g.ate ? ' &nbsp;·&nbsp; <b>Válida até:</b> ' + SC.fmtDate(g.ate) : ''}</div>
+      ${termoHTML(cfg.termoGarantia, vars)}
+      <div class="sigs"><div class="sig"><b>${esc(c.nome || 'Cliente')}</b>Assinatura do cliente · Data ____/____/______</div><div class="sig"><b>${esc(cfg.responsavel || cfg.nomeFantasia)}</b>Responsável técnico</div></div>
+      ${foot()}</section>`;
+    SC.print.show(pg1 + pg2, `Nota-${SC.pad(o.numero)}-${slug(c.nome)}`);
   };
 
   /* Pré-visualização do termo com dados dinâmicos ou de exemplo (usada nas configurações) */

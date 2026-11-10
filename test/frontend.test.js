@@ -7,7 +7,8 @@ const fs=require('node:fs'),vm=require('node:vm'),crypto=require('node:crypto'),
       let cookie='',drop=false; const toasts=[];
       const storage={getItem:()=>null,setItem:()=>{throw new Error('Customer data must not be written to browser storage');},removeItem:()=>{}};
       const cryptoMock = opts.noCrypto ? undefined : (opts.noCryptoRandomUUID ? {} : crypto.webcrypto);
-      const context=vm.createContext({console,crypto:cryptoMock,location:{protocol:'http:'},localStorage:storage,sessionStorage:storage,document:{},setTimeout,clearTimeout,
+      const doc={addEventListener:()=>{},removeEventListener:()=>{},getElementById:()=>null,body:{classList:{add:()=>{},remove:()=>{}}}};
+      const context=vm.createContext({console,crypto:cryptoMock,location:{protocol:'http:'},localStorage:storage,sessionStorage:storage,document:doc,setTimeout,clearTimeout,
         fetch:async (url,options={})=>{
           const response=await fetch(base+url,{...options,headers:{...options.headers,Cookie:cookie}});
           const set=response.headers.get('set-cookie');if(set)cookie=set.split(';')[0];
@@ -15,8 +16,15 @@ const fs=require('node:fs'),vm=require('node:vm'),crypto=require('node:crypto'),
           return response;
         }});
       context.window=context;
-      for(const file of ['js/core.js','js/remote.js']) vm.runInContext(fs.readFileSync(file,'utf8'),context,{filename:file});
+      for(const file of ['js/core.js','js/remote.js','js/ui.js','js/print.js','js/whats.js','js/notas.js']) vm.runInContext(fs.readFileSync(file,'utf8'),context,{filename:file});
       const SC=context.SC;SC.toast=(text)=>toasts.push(text);SC.refresh=()=>{};SC.boot=()=>{};
+      assert.ok(SC.pages.notas);
+      assert.ok(SC.whats);
+      assert.equal(SC.wa('11999998888'), 'https://wa.me/5511999998888');
+      const g = SC.notaInfo({ dataConclusao: '2026-11-01T10:00:00', garantiaDias: 90 });
+      assert.equal(g.dias, 90);
+      assert.equal(g.inicio, '2026-11-01');
+      assert.equal(g.ate, '2027-01-30');
       const login=await SC.api('/api/auth/login',{method:'POST',body:JSON.stringify({login:'admin',password:'permanent-test-password'})});
       SC.csrf=login.csrf;SC.user=login.user;await SC.load();
       return {SC,toasts,drop:()=>{drop=true;}};

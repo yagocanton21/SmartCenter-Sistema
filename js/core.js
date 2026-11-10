@@ -11,15 +11,15 @@
   SC.PAGAMENTOS = ['Dinheiro', 'Pix', 'Cartão de débito', 'Cartão de crédito', 'Crédito parcelado', 'Transferência', 'Boleto', 'Outro'];
   SC.APARELHOS = ['Celular', 'Tablet', 'Notebook', 'Computador', 'Console / Videogame', 'Smartwatch', 'Outro'];
   SC.MODULOS = [
-    { k: 'dashboard', n: 'Painel' }, { k: 'os', n: 'Ordens de serviço' }, { k: 'orcamentos', n: 'Orçamentos' },
+    { k: 'dashboard', n: 'Painel' }, { k: 'os', n: 'Ordens de serviço' }, { k: 'notas', n: 'Nota de serviços' }, { k: 'orcamentos', n: 'Orçamentos' },
     { k: 'vendas', n: 'Vendas' }, { k: 'produtos', n: 'Produtos e estoque' }, { k: 'clientes', n: 'Clientes' },
     { k: 'config', n: 'Configurações da loja' }, { k: 'usuarios', n: 'Usuários e permissões' },
     { k: 'backup', n: 'Backup e restauração' }, { k: 'excluir', n: 'Excluir registros' }
   ];
   SC.PERFIS = {
     admin: { nome: 'Administrador', perms: SC.MODULOS.map(m => m.k) },
-    atendente: { nome: 'Atendente', perms: ['dashboard', 'os', 'orcamentos', 'vendas', 'produtos', 'clientes'] },
-    tecnico: { nome: 'Técnico', perms: ['dashboard', 'os', 'orcamentos', 'clientes'] },
+    atendente: { nome: 'Atendente', perms: ['dashboard', 'os', 'notas', 'orcamentos', 'vendas', 'produtos', 'clientes'] },
+    tecnico: { nome: 'Técnico', perms: ['dashboard', 'os', 'notas', 'orcamentos', 'clientes'] },
     vendedor: { nome: 'Vendedor', perms: ['dashboard', 'vendas', 'produtos', 'clientes'] }
   };
   SC.statusClass = s => ({

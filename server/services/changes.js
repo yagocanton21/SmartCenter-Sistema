@@ -14,11 +14,11 @@ function snapshot(user) {
   const snap = models.getFullDatabase(), data = snap.db;
   data.users = data.users.filter(u => auth.can(user, 'usuarios') || u.id === user.id).map(auth.publicUser);
   if (data.config.logo && !/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(data.config.logo)) data.config.logo = '';
-  if (!auth.can(user, 'os')) data.os = [];
+  if (!auth.can(user, 'os') && !auth.can(user, 'notas')) data.os = [];
   if (!auth.can(user, 'vendas')) data.vendas = [];
   if (!auth.can(user, 'orcamentos')) data.orcamentos = [];
-  if (!['clientes', 'os', 'orcamentos', 'vendas'].some(p => auth.can(user, p))) data.clientes = [];
-  if (!['produtos', 'os', 'orcamentos', 'vendas'].some(p => auth.can(user, p))) data.produtos = [];
+  if (!['clientes', 'os', 'notas', 'orcamentos', 'vendas'].some(p => auth.can(user, p))) data.clientes = [];
+  if (!['produtos', 'os', 'notas', 'orcamentos', 'vendas'].some(p => auth.can(user, p))) data.produtos = [];
   if (user.perfil !== 'admin') data.log = [];
   return snap;
 }

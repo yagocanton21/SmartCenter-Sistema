@@ -3,7 +3,7 @@ const { getDatabase } = require('../db/connection');
 const Usuario = require('../models/Usuario');
 const sessions = new Map(), attempts = new Map();
 const MAX_AGE = 8 * 60 * 60 * 1000;
-const permissions = ['dashboard', 'os', 'orcamentos', 'vendas', 'produtos', 'clientes', 'config', 'usuarios', 'backup', 'excluir'];
+const permissions = ['dashboard', 'os', 'notas', 'orcamentos', 'vendas', 'produtos', 'clientes', 'config', 'usuarios', 'backup', 'excluir'];
 function fail(message, status = 400) { throw Object.assign(new Error(message), { status }); }
 function hash(password) {
   if (typeof password !== 'string' || password.length < 10 || password.length > 256) fail('A senha deve ter entre 10 e 256 caracteres.');

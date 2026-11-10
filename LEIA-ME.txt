@@ -33,3 +33,9 @@ Veja no README.md como preservar a chave e recuperar o banco.
 TESTES
 npm.cmd test
 Os testes usam bancos isolados e não alteram o banco da loja.
+
+IMPRESSÃO / PDF / WHATSAPP
+- Aba "Nota de serviços": emitida quando a OS é concluída, com o mesmo número da OS; só ela imprime o Termo de Garantia (a impressão da OS não imprime mais).
+- Compartilhamento por WhatsApp: ícone verde na lista de OS, botão no formulário da OS e na aba Nota de serviços. Abre o WhatsApp com a mensagem pronta para editar. Para enviar o documento, use Imprimir > Salvar como PDF e anexe na conversa.
+- A OS tem senha do aparelho (padrão desenhado ou PIN/alfanumérica) e checklist de entrada para Celular e Tablet.
+- Botão Imprimir abre a visualização A4. Em "Salvar em PDF", escolha "Salvar como PDF" no destino da impressora.

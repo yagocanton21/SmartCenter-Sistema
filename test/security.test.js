@@ -43,7 +43,13 @@ const { OS } = require('../server/models');
     assert.equal((await request('GET','/api/db')).status,401);
     assert.equal((await request('GET','/api/db',undefined,userHeaders,true)).status,401);
     assert.equal((await request('POST','/api/auth/login',{login:'admin',password:'permanent-test-password'},{},true)).status,200);
-    const response=await fetch(base+'/'); assert.equal(response.status,200); assert.ok((await response.text()).includes('js/remote.js'));
+    const response=await fetch(base+'/'); assert.equal(response.status,200);
+    const html=await response.text();
+    assert.ok(html.includes('js/remote.js'));
+    assert.ok(html.includes('js/whats.js'));
+    assert.ok(html.includes('js/notas.js'));
+    assert.equal((await fetch(base+'/js/whats.js')).status,200);
+    assert.equal((await fetch(base+'/js/notas.js')).status,200);
     console.log('OK: autenticação, troca obrigatória, CSRF, permissões, arquivos privados, URL inválida, criptografia, retenção e restauração.');
   } finally { await close(); }
 })().catch(error=>{console.error(error);process.exitCode=1;});

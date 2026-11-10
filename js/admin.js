@@ -22,7 +22,7 @@
           ${f.area('Condições de pagamento', 'condicoesPagamento', c.condicoesPagamento, { s: 12, rows: 3 })}
         </div>
         <div data-p="t" hidden>
-          <p class="hint">Edite o texto abaixo. Use <b># Título</b>, <b>## Seção</b> e <b>- item</b> para formatar. Variáveis disponíveis: <code>{{loja}}</code> <code>{{garantia}}</code> <code>{{os}}</code> <code>{{cliente}}</code> <code>{{aparelho}}</code> <code>{{data}}</code> <code>{{telefone}}</code> <code>{{endereco}}</code> <code>{{cnpj}}</code>.</p>
+          <p class="hint">Este termo é impresso na <b>Nota de Serviço</b>, quando a manutenção é concluída. Edite o texto abaixo. Use <b># Título</b>, <b>## Seção</b> e <b>- item</b> para formatar. Variáveis disponíveis: <code>{{loja}}</code> <code>{{garantia}}</code> <code>{{os}}</code> <code>{{cliente}}</code> <code>{{aparelho}}</code> <code>{{data}}</code> <code>{{telefone}}</code> <code>{{endereco}}</code> <code>{{cnpj}}</code>.</p>
           <textarea name="termoGarantia" rows="24" style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;line-height:1.5">${esc(c.termoGarantia)}</textarea>
           <div class="head-actions" style="margin-top:10px"><button type="button" class="btn" id="tprev">${icon('eye', 16)} Pré-visualizar</button><button type="button" class="btn" id="treset">Restaurar modelo padrão</button></div>
         </div></form></div></div>`;

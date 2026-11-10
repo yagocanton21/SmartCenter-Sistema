@@ -143,6 +143,26 @@ textarea:focus-visible,
   background: var(--sky);
 }
 
+.wa-ic {
+  color: #128c4a;
+}
+
+.wa-ic:hover {
+  background: #e6f7ee;
+}
+
+.btn.wa-btn {
+  background: #25d366;
+  border-color: #25d366;
+  color: #05301a;
+  font-weight: 700;
+}
+
+.btn.wa-btn:hover {
+  background: #1fbb5a;
+  border-color: #1fbb5a;
+}
+
 .btn.sm {
   padding: 6px 10px;
   font-size: 13px;
