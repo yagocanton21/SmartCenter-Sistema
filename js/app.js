@@ -14,7 +14,6 @@
   /* ---------- Login ---------- */
   SC.boot = () => {
     const u = SC.user;
-    if (u?.mustChangePassword) { showLogin(); SC.changePassword(); return; }
     if (u) { SC.user = u; SC.renderShell(); route(); } else showLogin();
   };
   function showLogin(msg) {
@@ -64,7 +63,7 @@
     });
     m.el.querySelector('[data-ok]').onclick = async () => {
       const v = SC.vals(m.body);
-      if (v.n.length < 10) return SC.toast('A nova senha deve ter ao menos 10 caracteres.', 'err');
+      if (!v.n) return SC.toast('Informe a nova senha.', 'err');
       if (v.n !== v.r) return SC.toast('As senhas digitadas não conferem.', 'err');
       try {
         const result = await SC.api('/api/auth/password', { method: 'POST', body: JSON.stringify({ currentPassword: v.a, password: v.n }) });

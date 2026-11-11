@@ -39,8 +39,7 @@ function userSave(value, before) {
   user.perms = (user.perms || []).filter(p => auth.permissions.includes(p));
   user.senha = value.password ? auth.hash(value.password) : before?.senha;
   if (!user.senha) auth.fail('Informe a senha do novo usuário.');
-  user.mustChangePassword = before?.mustChangePassword ?? true;
-  if (value.password) user.mustChangePassword = true;
+  user.mustChangePassword = false;
   delete user.password;
   auth.save(user);
 }

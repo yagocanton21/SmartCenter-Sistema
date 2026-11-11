@@ -7,10 +7,10 @@ backup_dir="$PWD/backups/deploy-$(date -u +%Y%m%dT%H%M%SZ)"
 mkdir -p "$backup_dir"
 if docker inspect smartcenter-app >/dev/null 2>&1; then
   docker stop smartcenter-app >/dev/null
-  # The legacy server ignored DB_PATH and used /app/smartcenter.db.
-  source_path=/app/smartcenter.db
+  # The persistent production database is located in the smartcenter-data volume at /app/data/smartcenter.db.
+  source_path=/app/data/smartcenter.db
   if ! docker cp "smartcenter-app:$source_path" "$backup_dir/smartcenter.db" 2>/dev/null; then
-    source_path=/app/data/smartcenter.db
+    source_path=/app/smartcenter.db
     if ! docker cp "smartcenter-app:$source_path" "$backup_dir/smartcenter.db"; then
       docker start smartcenter-app >/dev/null
       echo 'Backup não criado; implantação interrompida.' >&2

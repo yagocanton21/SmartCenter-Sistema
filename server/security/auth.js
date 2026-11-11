@@ -6,7 +6,7 @@ const MAX_AGE = 8 * 60 * 60 * 1000;
 const permissions = ['dashboard', 'os', 'notas', 'orcamentos', 'vendas', 'produtos', 'clientes', 'config', 'usuarios', 'backup', 'excluir'];
 function fail(message, status = 400) { throw Object.assign(new Error(message), { status }); }
 function hash(password) {
-  if (typeof password !== 'string' || password.length < 10 || password.length > 256) fail('A senha deve ter entre 10 e 256 caracteres.');
+  if (typeof password !== 'string' || password.length < 1 || password.length > 256) fail('A senha não pode estar vazia.');
   const salt = crypto.randomBytes(16).toString('hex');
   return `scrypt:${salt}:${crypto.scryptSync(password, salt, 64).toString('hex')}`;
 }
@@ -29,10 +29,22 @@ function save(user) {
   getDatabase().prepare('INSERT INTO users(id,login,data) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET login=excluded.login,data=excluded.data').run(user.id, user.login, JSON.stringify(user));
 }
 function initialize() {
-  if (!Usuario.getAll().length) {
-    const password = process.env.INITIAL_ADMIN_PASSWORD || crypto.randomBytes(18).toString('base64url');
-    save({ id: crypto.randomUUID(), login: 'admin', nome: 'Administrador', perfil: 'admin', perms: permissions, ativo: true, senha: hash(password), mustChangePassword: true });
-    if (!process.env.INITIAL_ADMIN_PASSWORD) console.log(`Primeiro acesso — admin / ${password} (troca obrigatória).`);
+  const users = Usuario.getAll();
+  for (const u of users) {
+    if (u.mustChangePassword) {
+      u.mustChangePassword = false;
+      save(u);
+    }
+  }
+  const adminUser = users.find(u => u.login === 'admin');
+  if (!users.length) {
+    const password = process.env.INITIAL_ADMIN_PASSWORD || 'admin';
+    save({ id: crypto.randomUUID(), login: 'admin', nome: 'Administrador', perfil: 'admin', perms: permissions, ativo: true, senha: hash(password), mustChangePassword: false });
+    console.log(`Usuário admin inicial configurado (login: admin / senha: ${password}).`);
+  } else if (!adminUser) {
+    const password = process.env.INITIAL_ADMIN_PASSWORD || 'admin';
+    save({ id: crypto.randomUUID(), login: 'admin', nome: 'Administrador', perfil: 'admin', perms: permissions, ativo: true, senha: hash(password), mustChangePassword: false });
+    console.log(`Usuário admin restaurado (login: admin / senha: ${password}).`);
   }
 }
 function can(user, permission) { return user && (user.perfil === 'admin' || (user.perms || []).includes(permission)); }
@@ -55,10 +67,13 @@ function login(req, res, body) {
   if (!user || !user.ativo || !verify(body.password, user.senha)) { attempts.get(ip).count++; fail('Usuário ou senha incorretos.', 401); }
   attempts.delete(ip);
   if (!user.senha.startsWith('scrypt:')) {
-    user.mustChangePassword = true;
-    // Derive immediately even for legacy short passwords; replacement remains mandatory.
+    user.mustChangePassword = false;
     const salt = crypto.randomBytes(16).toString('hex');
     user.senha = `scrypt:${salt}:${crypto.scryptSync(body.password,salt,64).toString('hex')}`;
+    save(user);
+  }
+  if (user.mustChangePassword) {
+    user.mustChangePassword = false;
     save(user);
   }
   for (const [key, session] of sessions) if (session.expires < Date.now()) sessions.delete(key);

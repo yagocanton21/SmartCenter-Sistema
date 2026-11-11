@@ -85,8 +85,10 @@ class Produto {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
     `);
     for (const p of produtos) {
+      if (!p) continue;
+      const id = p.id || ('prod_' + Math.random().toString(36).slice(2));
       stmt.run(
-        p.id,
+        id,
         p.codigo || '',
         p.nome || '',
         p.categoria || '',
@@ -96,7 +98,7 @@ class Produto {
         Number(p.estoque) || 0,
         Number(p.estoqueMin) || 0,
         p.ativo === false ? 0 : 1,
-        JSON.stringify(p)
+        JSON.stringify({ ...p, id })
       );
     }
   }

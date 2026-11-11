@@ -101,8 +101,7 @@
         const v = SC.vals(body), login = v.login.trim().toLowerCase();
         if (!v.nome.trim() || !login) return SC.toast('Informe o nome e o login.', 'err');
         if (SC.db.users.some(x => x.id !== (u && u.id) && x.login === login)) return SC.toast('Este login já está em uso.', 'err');
-        if (isNew && v.senha.length < 10) return SC.toast('A senha deve ter ao menos 10 caracteres.', 'err');
-        if (v.senha && v.senha.length < 10) return SC.toast('A senha deve ter ao menos 10 caracteres.', 'err');
+        if (isNew && !v.senha) return SC.toast('Informe a senha do usuário.', 'err');
         const perms = [...body.querySelectorAll('[data-perm]')].filter(c => c.checked).map(c => c.dataset.perm);
         if (u && u.id === SC.user.id && (!v.ativo || v.perfil !== 'admin') && SC.db.users.filter(x => x.perfil === 'admin' && x.ativo).length <= 1) return SC.toast('Você é o único administrador ativo. Mantenha seu perfil e acesso.', 'err');
         const base = u || { id: SC.uid() };

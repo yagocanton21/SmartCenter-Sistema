@@ -141,13 +141,46 @@ function initSchema() {
     const config = Object.fromEntries(legacy.config.map(r => [r.key, JSON.parse(r.value)]));
     models.StoreConfig.saveConfig(config);
     models.StoreConfig.saveSequences(Object.fromEntries(legacy.seq.map(r => [r.name, r.val])));
-    models.Usuario.saveAll(legacy.users.map(r => JSON.parse(r.data)));
-    models.Cliente.saveAll(legacy.clientes.map(r => JSON.parse(r.data)));
-    models.Produto.saveAll(legacy.produtos.map(r => JSON.parse(r.data)));
-    models.OS.saveAll(legacy.os.map(r => require('../security/secrets').decode(r.data)));
-    models.Orcamento.saveAll(legacy.orcamentos.map(r => JSON.parse(r.data)));
-    models.Venda.saveAll(legacy.vendas.map(r => JSON.parse(r.data)));
-    models.Log.saveAll(legacy.logs.map(r => JSON.parse(r.data)));
+    models.Usuario.saveAll(legacy.users.map(r => {
+      const u = JSON.parse(r.data || '{}');
+      return { id: r.id || u.id, login: r.login || u.login, ...u };
+    }));
+    models.Cliente.saveAll(legacy.clientes.map(r => {
+      const c = JSON.parse(r.data || '{}');
+      return { id: r.id || c.id, nome: r.nome || c.nome, doc: r.doc || c.doc, telefone: r.telefone || c.telefone, ...c };
+    }));
+    models.Produto.saveAll(legacy.produtos.map(r => {
+      const p = JSON.parse(r.data || '{}');
+      return {
+        id: r.id || p.id,
+        codigo: r.codigo || p.codigo,
+        nome: r.nome || p.nome,
+        categoria: r.categoria || p.categoria,
+        custo: r.custo ?? p.custo ?? 0,
+        preco: r.preco ?? p.preco ?? 0,
+        controla: r.controla ?? p.controla ?? 1,
+        estoque: r.estoque ?? p.estoque ?? 0,
+        estoqueMin: r.estoqueMin ?? p.estoqueMin ?? 0,
+        ativo: r.ativo ?? p.ativo ?? 1,
+        ...p
+      };
+    }));
+    models.OS.saveAll(legacy.os.map(r => {
+      const val = typeof r.data === 'string' ? require('../security/secrets').decode(r.data) : {};
+      return { id: r.id || val.id, numero: r.numero || val.numero, status: r.status || val.status, ...val };
+    }));
+    models.Orcamento.saveAll(legacy.orcamentos.map(r => {
+      const o = JSON.parse(r.data || '{}');
+      return { id: r.id || o.id, numero: r.numero || o.numero, status: r.status || o.status, ...o };
+    }));
+    models.Venda.saveAll(legacy.vendas.map(r => {
+      const v = JSON.parse(r.data || '{}');
+      return { id: r.id || v.id, numero: r.numero || v.numero, status: r.status || v.status, ...v };
+    }));
+    models.Log.saveAll(legacy.logs.map(r => {
+      const l = JSON.parse(r.data || '{}');
+      return { id: r.id || l.id, ...l };
+    }));
   }
   for (const [name, table, column] of [['os','os','numero'], ['venda','vendas','numero'], ['orcamento','orcamentos','numero']]) {
     const max = db.prepare(`SELECT coalesce(max(${column}),0) AS n FROM ${table}`).get().n;

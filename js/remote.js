@@ -35,13 +35,43 @@
   SC.load = async () => {
     if (!/^https?:$/.test(location.protocol)) throw new Error('Inicie o SmartCenter pelo arquivo iniciar.bat ou npm start.');
     SC.db ||= SC.defaults();
+    let legacyUsers = [];
+    try {
+      const rawOld = localStorage.getItem('smartcenter.db.v1');
+      if (rawOld) {
+        const parsed = JSON.parse(rawOld);
+        if (Array.isArray(parsed?.users) && parsed.users.length) {
+          legacyUsers = parsed.users;
+        }
+      }
+    } catch {}
     // Remove old browser replicas containing credentials or customer/device data.
     try { localStorage.removeItem('smartcenter.db.v1'); sessionStorage.removeItem('smartcenter.session'); } catch {}
     try {
       const session = await SC.api('/api/auth/session');
       if (owner !== session.user.id) { pending = null; baseline = null; owner = session.user.id; }
       SC.csrf = session.csrf; SC.user = session.user;
-      if (!session.user.mustChangePassword) adopt((await SC.api('/api/db')).db);
+      adopt((await SC.api('/api/db')).db);
+      if (legacyUsers.length && SC.user?.perfil === 'admin') {
+        let imported = false;
+        for (const lu of legacyUsers) {
+          if (lu.login && !SC.db.users.some(u => u.login === lu.login.toLowerCase())) {
+            SC.db.users.push({
+              id: lu.id || (SC.uid ? SC.uid() : 'u_' + Date.now()),
+              nome: lu.nome || lu.login,
+              login: lu.login.toLowerCase(),
+              perfil: lu.perfil || 'atendente',
+              perms: lu.perms || [],
+              ativo: lu.ativo !== false,
+              senha: lu.senha || ''
+            });
+            imported = true;
+          }
+        }
+        if (imported) {
+          SC.save().catch(e => console.warn('Erro ao migrar usuários locais:', e));
+        }
+      }
     } catch (error) {
       if (error.status !== 401) throw error;
       baseline = null; pending = null; owner = null;
@@ -74,7 +104,6 @@
       }
       const result = await SC.api('/api/changes', { method: 'POST', headers: { 'Idempotency-Key': pending.key }, body: pending.body });
       pending = null; adopt(result.db); SC.storage.ok = true;
-      if (SC.user?.mustChangePassword) SC.boot();
       if (changedAfterFailure) { SC.toast('A gravação pendente foi recuperada. Confira os dados e salve novamente as alterações posteriores.', 'warn'); SC.refresh?.(); return false; }
       return true;
     } catch (error) {

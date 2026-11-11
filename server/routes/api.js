@@ -91,7 +91,6 @@ async function handleApiRequest(req, res, pathname) {
       changesService.audit(session.user, 'usuario', 'Senha alterada');
       return sendJSON(res, 200, { ok: true, user: auth.publicUser(session.user) });
     }
-    if (session.user.mustChangePassword) auth.fail('Troque a senha inicial para continuar.', 428);
     const user = session.user, db = getDatabase();
     if (pathname === '/api/db' && req.method === 'GET') return sendJSON(res, 200, changesService.snapshot(user));
     if (pathname === '/api/changes' && req.method === 'POST') {
