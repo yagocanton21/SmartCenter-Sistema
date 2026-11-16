@@ -30,6 +30,8 @@ const auth = require('../server/security/auth');
     const current = (await request('GET', '/api/os/mobile-order')).body.os;
     assert.equal((await request('POST', '/api/os', { ...current, before: current, status: 'Em reparo' })).status, 200);
     assert.equal(Produto.getById('mobile-part').estoque, 3);
+    require('../server/db/connection').getDatabase().prepare('DELETE FROM os WHERE id=?').run('mobile-order');
+    assert.equal((await request('POST', '/api/os', { ...current, before: current })).status, 409);
     auth.save({ id: 'mobile-limited', login: 'mobile-limited', nome: 'Sem OS', perfil: 'vendedor', perms: ['clientes'], ativo: true, senha: auth.hash('test-pass') });
     const login = await request('POST', '/api/auth/login', { login: 'mobile-limited', password: 'test-pass' }, {}, true);
     const headers = { Cookie: login.headers.get('set-cookie').split(';')[0] };

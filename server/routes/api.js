@@ -164,8 +164,10 @@ async function handleApiRequest(req, res, pathname) {
       const { body, rawBody } = await readBody(req);
       const result = idempotent(req, user, pathname, rawBody, () => {
         // Explicit optimistic comparison is required for updates.
-        if (entity === 'os' && models.OS.getById(body.id)) {
-          if (!body.before || changesService.stable(body.before) !== changesService.stable(models.OS.getById(body.id))) auth.fail('OS alterada; recarregue.',409);
+        if (entity === 'os') {
+          const existing = models.OS.getById(body.id);
+          if (body.before && !existing) auth.fail('OS removida; recarregue.', 409);
+          if (existing && (!body.before || changesService.stable(body.before) !== changesService.stable(existing))) auth.fail('OS alterada; recarregue.',409);
         }
         if (body.cliente) { auth.requirePermission(user,'clientes'); models.Cliente.salvarCliente(body.cliente); body.clienteId = body.cliente.id; delete body.cliente; }
         delete body.before;

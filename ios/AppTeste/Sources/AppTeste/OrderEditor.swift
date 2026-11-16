@@ -91,7 +91,7 @@ final class OrderDraft: ObservableObject {
 
     func load(auth: AuthStore, id: String?) async {
         guard !loading else { return }
-        loading = true; error = nil; conflict = false
+        loading = true; ready = false; error = nil; conflict = false
         defer { loading = false }
         guard let id else { ready = true; return }
         do {
@@ -154,7 +154,7 @@ final class OrderDraft: ObservableObject {
             _ = try await auth.orderRequest("api/os", body: data, idempotencyKey: idempotencyKey)
             return true
         } catch {
-            conflict = (error as NSError).domain == "Smartcenter" && (error as NSError).code == 409 && error.localizedDescription.contains("OS alterada")
+            conflict = (error as NSError).domain == "Smartcenter" && (error as NSError).code == 409 && (error.localizedDescription.contains("OS alterada") || error.localizedDescription.contains("OS removida"))
             if error is URLError {
                 self.error = "Não foi possível confirmar a gravação. Confira a conexão e tente salvar novamente; a mesma tentativa não duplica a OS."
             } else {
@@ -271,7 +271,9 @@ struct OrderEditor: View {
                 } message: { Text("O estoque e as datas da OS serão atualizados pela API.") }
         }
     }
-    private func input(_ title: String, _ value: Binding<String>) -> some View { TextField(title, text: value) }
+    private func input(_ title: String, _ value: Binding<String>) -> some View {
+        LabeledContent(title) { TextField("Não informado", text: value).multilineTextAlignment(.trailing) }
+    }
     private func save() { Task { if await draft.save(auth: auth) { onSaved(); dismiss() } } }
 }
 
