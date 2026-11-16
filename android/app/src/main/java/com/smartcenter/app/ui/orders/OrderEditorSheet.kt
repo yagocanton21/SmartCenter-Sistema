@@ -3,9 +3,11 @@ package com.smartcenter.app.ui.orders
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -538,35 +540,54 @@ fun OrderEditorDialog(
                     item {
                         SectionCard(title = "Status, Valores e Fechamento", icon = Icons.Default.AttachMoney) {
                             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                // Status
-                                Text("Status Atual:", color = TextSecondary, fontSize = 12.sp)
+                                // Status com rolagem horizontal e pílulas modernas
+                                Text("Status da Ordem:", color = TextSecondary, fontSize = 12.sp, fontWeight = FontWeight.Medium)
                                 val statusList = listOf("Recebido", "Em análise", "Aguardando aprovação", "Aguardando peças", "Em reparo", "Concluído", "Entregue")
+
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
+                                        .horizontalScroll(rememberScrollState())
                                         .padding(vertical = 4.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    statusList.take(4).forEach { s ->
-                                        FilterChip(
-                                            selected = status == s,
+                                    statusList.forEach { s ->
+                                        val isSelected = status == s
+                                        val pillColor = when (s) {
+                                            "Concluído", "Entregue" -> AppleGreen
+                                            "Em reparo", "Aguardando peças" -> AppleOrange
+                                            else -> AppleBlue
+                                        }
+                                        Surface(
                                             onClick = { status = s },
-                                            label = { Text(s, fontSize = 10.sp) }
-                                        )
-                                    }
-                                }
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 2.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    statusList.drop(4).forEach { s ->
-                                        FilterChip(
-                                            selected = status == s,
-                                            onClick = { status = s },
-                                            label = { Text(s, fontSize = 10.sp) }
-                                        )
+                                            shape = RoundedCornerShape(16.dp),
+                                            color = if (isSelected) pillColor else CardSecondary,
+                                            border = androidx.compose.foundation.BorderStroke(
+                                                1.dp,
+                                                if (isSelected) pillColor else CardBorder
+                                            )
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                            ) {
+                                                if (isSelected) {
+                                                    Icon(
+                                                        Icons.Default.Check,
+                                                        contentDescription = null,
+                                                        tint = Color.White,
+                                                        modifier = Modifier.size(14.dp)
+                                                    )
+                                                }
+                                                Text(
+                                                    text = s,
+                                                    color = if (isSelected) Color.White else TextPrimary,
+                                                    fontSize = 13.sp,
+                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                                )
+                                            }
+                                        }
                                     }
                                 }
 
