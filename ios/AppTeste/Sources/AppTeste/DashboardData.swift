@@ -35,6 +35,28 @@ struct DashboardData: Decodable {
         }.reduce(0) { $0 + ($1.total ?? 0) }
         return orders + validSales.filter { ($0.data ?? "").hasPrefix(prefix) }.reduce(0) { $0 + ($1.total ?? 0) }
     }
+
+    func last14DaysRevenue() -> [DayRevenue] {
+        let calendar = Calendar.current
+        let todayKey = Self.dateKey()
+        var results: [DayRevenue] = []
+        for i in (0..<14).reversed() {
+            if let d = calendar.date(byAdding: .day, value: -i, to: Date()) {
+                let key = Self.dateKey(d)
+                let dayLabel = String(key.suffix(2))
+                let amt = revenue(prefix: key)
+                results.append(DayRevenue(id: key, dayLabel: dayLabel, amount: amt, isToday: key == todayKey))
+            }
+        }
+        return results
+    }
+}
+
+struct DayRevenue: Identifiable {
+    let id: String
+    let dayLabel: String
+    let amount: Double
+    let isToday: Bool
 }
 
 struct DashboardOrder: Decodable {

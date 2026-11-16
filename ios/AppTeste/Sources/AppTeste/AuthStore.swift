@@ -193,7 +193,13 @@ final class AuthStore: ObservableObject {
 
     func orderRequest(_ path: String, body: Data? = nil, idempotencyKey: String? = nil, permission: String = "os") async throws -> Data {
         guard let baseURL, user?.can(permission) == true else { throw URLError(.userAuthenticationRequired) }
-        var request = URLRequest(url: baseURL.appendingPathComponent(path))
+        let fullURL: URL
+        if let direct = URL(string: path, relativeTo: baseURL) {
+            fullURL = direct.absoluteURL
+        } else {
+            fullURL = baseURL.appendingPathComponent(path)
+        }
+        var request = URLRequest(url: fullURL)
         request.httpMethod = body == nil ? "GET" : "POST"
         request.timeoutInterval = 25
         request.cachePolicy = .reloadIgnoringLocalCacheData

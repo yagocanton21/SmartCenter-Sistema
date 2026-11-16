@@ -145,11 +145,13 @@ async function handleApiRequest(req, res, pathname) {
       return sendJSON(res, 201, { ok: true });
     }
     const entity = pathname.split('/')[2];
-    if (req.method === 'GET' && /^\/api\/(os|clientes)\/[^/]+$/.test(pathname)) {
+    if (req.method === 'GET' && /^\/api\/(os|clientes|produtos|orcamentos|vendas)\/[^/]+$/.test(pathname)) {
       auth.requirePermission(user, entity);
-      const value = (entity === 'os' ? models.OS : models.Cliente).getById(pathname.split('/')[3]);
-      if (!value) auth.fail(entity === 'os' ? 'Ordem de serviço não encontrada.' : 'Cliente não encontrado.', 404);
-      return sendJSON(res, 200, { [entity === 'os' ? 'os' : 'cliente']: value });
+      const model = { os: models.OS, clientes: models.Cliente, produtos: models.Produto, orcamentos: models.Orcamento, vendas: models.Venda }[entity];
+      const value = model.getById(pathname.split('/')[3]);
+      if (!value) auth.fail('Registro não encontrado.', 404);
+      const key = { os: 'os', clientes: 'cliente', produtos: 'produto', orcamentos: 'orcamento', vendas: 'venda' }[entity];
+      return sendJSON(res, 200, { [key]: value });
     }
     if (['clientes','produtos','os','orcamentos','vendas'].includes(entity) && pathname === '/api/' + entity && req.method === 'GET') {
       auth.requirePermission(user, entity);

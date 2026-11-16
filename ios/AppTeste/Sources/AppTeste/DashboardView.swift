@@ -28,6 +28,42 @@ struct DashboardView: View {
                             Text("Hoje").font(.caption.weight(.medium)).foregroundStyle(.secondary)
                         }
                         metrics(data)
+                        if user.can("vendas") || user.can("os") || user.can("notas") {
+                            let days = data.last14DaysRevenue()
+                            let maxVal = max(days.map(\.amount).max() ?? 1, 1)
+                            let total14 = days.reduce(0) { $0 + $1.amount }
+                            section("Faturamento dos últimos 14 dias") {
+                                VStack(alignment: .leading, spacing: 10) {
+                                    HStack {
+                                        Text("Total no período:")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                        Text(money(total14))
+                                            .font(.system(size: 13, weight: .bold))
+                                        Spacer()
+                                    }
+                                    HStack(alignment: .bottom, spacing: 5) {
+                                        ForEach(days) { day in
+                                            VStack(spacing: 4) {
+                                                GeometryReader { geo in
+                                                    VStack {
+                                                        Spacer(minLength: 0)
+                                                        RoundedRectangle(cornerRadius: 3)
+                                                            .fill(day.isToday ? Color.blue : Color.blue.opacity(0.35))
+                                                            .frame(height: max(3, geo.size.height * CGFloat(day.amount / maxVal)))
+                                                    }
+                                                }
+                                                .frame(height: 75)
+                                                Text(day.dayLabel)
+                                                    .font(.system(size: 9, weight: day.isToday ? .bold : .regular))
+                                                    .foregroundStyle(day.isToday ? Color.blue : Color.secondary)
+                                            }
+                                        }
+                                    }
+                                    .frame(height: 95)
+                                }
+                            }
+                        }
                         if user.can("os") || user.can("notas") {
                             section("Ordens por status") {
                                 ForEach(DashboardData.statuses, id: \.self) { status in

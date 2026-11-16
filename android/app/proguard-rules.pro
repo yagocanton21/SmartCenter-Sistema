@@ -1,0 +1,2 @@
+# SmartCenter Proguard rules
+

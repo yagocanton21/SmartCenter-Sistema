@@ -27,6 +27,7 @@ enum OrderJSON: Codable, Equatable, Sendable {
     var array: [OrderJSON] { if case .array(let v) = self { return v }; return [] }
     var text: String { if case .string(let v) = self { return v }; return "" }
     var number: Double { if case .number(let v) = self { return v }; return 0 }
+    var boolean: Bool { if case .bool(let v) = self { return v }; return false }
 }
 
 struct OrderPart: Identifiable {
@@ -74,12 +75,18 @@ final class OrderDraft: ObservableObject {
     @Published var deadline = Date()
     @Published var warranty = "90"
     @Published var payment = ""
+    @Published var lockType = "nenhuma"
+    @Published var password = ""
+    @Published var patternSequence = ""
+    @Published var checklist: [String: String] = [:]
+    @Published var checklistObs = ""
     private var original: [String: OrderJSON]?
     private var snapshot: [String: OrderJSON] = [:]
     private let newID = UUID().uuidString
     private var lastPayload: Data?
     private var idempotencyKey = UUID().uuidString
     var isNew: Bool { original == nil }
+    var clientPhone: String { snapshot["telefone"]?.text ?? "" }
     var total: Double { (Self.decimal(labor) ?? 0) + parts.reduce(0) { $0 + (Self.decimal($1.quantity) ?? 0) * (Self.decimal($1.price) ?? 0) } }
     nonisolated static func decimal(_ value: String) -> Double? {
         Double(value.trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: ",", with: "."))
@@ -108,6 +115,17 @@ final class OrderDraft: ObservableObject {
             diagnosis = order["diagnostico"]?.text ?? ""; service = order["servico"]?.text ?? ""; notes = order["observacoes"]?.text ?? ""
             status = order["status"]?.text ?? "Recebido"; labor = String(order["maoDeObra"]?.number ?? 0)
             warranty = String(Int(order["garantiaDias"]?.number ?? 0)); payment = order["formaPagamento"]?.text ?? ""
+            lockType = device["senhaTipo"]?.text ?? (!device["senha"]!.text.isEmpty ? "alfa" : (!device["senhaPadrao"]!.text.isEmpty ? "padrao" : "nenhuma"))
+            password = device["senha"]?.text ?? ""
+            patternSequence = device["senhaPadrao"]?.text ?? ""
+            if let ck = order["checklist"]?.object {
+                var map: [String: String] = [:]
+                for (k, v) in ck { map[k] = v.text }
+                checklist = map
+            } else {
+                checklist = [:]
+            }
+            checklistObs = order["checklistObs"]?.text ?? ""
             entry = Self.parseDate(order["dataEntrada"]?.text ?? "") ?? Date()
             hasDeadline = !(order["prazo"]?.text ?? "").isEmpty
             deadline = Self.parseDate(order["prazo"]?.text ?? "") ?? Date()
@@ -140,8 +158,20 @@ final class OrderDraft: ObservableObject {
             var result = original ?? ["id": .string(newID), "historico": .array([]), "baixaEstoque": .array([]), "estoqueBaixado": .bool(false)]
             var device = result["aparelho"]?.object ?? [:]
             for (key, value) in ["tipo": deviceType, "marca": brand, "modelo": model, "imei": serial, "cor": color, "acessorios": accessories, "estado": condition, "defeito": defect] { device[key] = .string(value.trimmingCharacters(in: .whitespacesAndNewlines)) }
+            device["senhaTipo"] = .string(lockType)
+            device["senha"] = .string(lockType == "alfa" ? password.trimmingCharacters(in: .whitespacesAndNewlines) : "")
+            device["senhaPadrao"] = .string(lockType == "padrao" ? patternSequence : "")
             result["aparelho"] = .object(device); result["clienteId"] = .string(clientID); result["cliSnap"] = .object(snapshot)
             for (key, value) in ["status": status, "diagnostico": diagnosis, "servico": service, "observacoes": notes, "formaPagamento": payment] { result[key] = .string(value) }
+            if ["Celular", "Tablet"].contains(deviceType) {
+                var ckDict: [String: OrderJSON] = [:]
+                for (k, v) in checklist { ckDict[k] = .string(v) }
+                result["checklist"] = .object(ckDict)
+                result["checklistObs"] = .string(checklistObs.trimmingCharacters(in: .whitespacesAndNewlines))
+            } else {
+                result["checklist"] = .null
+                result["checklistObs"] = .string("")
+            }
             let day = DashboardData.dateKey(entry)
             let previousDate = original?["dataEntrada"]?.text ?? ""
             result["dataEntrada"] = .string(previousDate.hasPrefix(day) ? previousDate : day + "T12:00:00")
@@ -163,17 +193,59 @@ final class OrderDraft: ObservableObject {
             return false
         }
     }
+
+    func prefillFromQuote(_ quote: [String: OrderJSON]) {
+        clientID = quote["clienteId"]?.text ?? ""
+        let snap = quote["cliSnap"]?.object ?? [:]
+        snapshot = snap
+        clientName = snap["nome"]?.text ?? "Cliente selecionado"
+        let dev = quote["aparelho"]?.object ?? [:]
+        deviceType = dev["tipo"]?.text ?? "Celular"
+        brand = dev["marca"]?.text ?? ""
+        model = dev["modelo"]?.text ?? ""
+        defect = dev["defeito"]?.text ?? ""
+        diagnosis = quote["diagnostico"]?.text ?? ""
+        labor = String(quote["maoDeObra"]?.number ?? 0)
+        status = "Em reparo"
+        parts = (quote["pecas"]?.array ?? []).map { value in
+            let p = value.object
+            return OrderPart(raw: p, description: p["descricao"]?.text ?? "", quantity: String(p["qtd"]?.number ?? 1), price: String(p["valor"]?.number ?? p["preco"]?.number ?? 0), productID: p["produtoId"]?.text)
+        }
+        var initial: [String: OrderJSON] = [
+            "id": .string(newID),
+            "historico": .array([]),
+            "baixaEstoque": .array([]),
+            "estoqueBaixado": .bool(false)
+        ]
+        if let qid = quote["id"]?.text, !qid.isEmpty {
+            initial["orcamentoId"] = .string(qid)
+        }
+        original = initial
+        ready = true
+    }
+
+    func prefillFromClient(_ client: [String: OrderJSON]) {
+        clientID = client["id"]?.text ?? ""
+        snapshot = client
+        clientName = client["nome"]?.text ?? "Cliente selecionado"
+        ready = true
+    }
 }
 
 struct OrderEditor: View {
     @ObservedObject var auth: AuthStore
     let orderID: String?
+    var prefillQuote: [String: OrderJSON]? = nil
+    var prefillClient: [String: OrderJSON]? = nil
     let onSaved: () -> Void
     @StateObject private var draft = OrderDraft()
     @State private var choosingClient = false
     @State private var choosingProduct = false
     @State private var confirmFinish = false
     @State private var confirmCancel = false
+    @State private var showingWhatsApp = false
+    @State private var pdfShareItem: PDFShareItem?
+    @State private var generatingPDF = false
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -208,6 +280,11 @@ struct OrderEditor: View {
                             input("Acessórios", $draft.accessories)
                             input("Estado de conservação", $draft.condition)
                         }
+                    }
+                    DeviceLockPickerView(lockType: $draft.lockType, password: $draft.password, patternSequence: $draft.patternSequence)
+
+                    if ["Celular", "Tablet"].contains(draft.deviceType) {
+                        ChecklistSectionView(checklist: $draft.checklist, observations: $draft.checklistObs)
                     }
                     Section("Atendimento") {
                         Picker("Status", selection: $draft.status) { ForEach(DashboardData.statuses, id: \.self) { Text($0).tag($0) } }
@@ -252,11 +329,46 @@ struct OrderEditor: View {
                             if draft.saving { ProgressView() } else { Text("Salvar").bold() }
                         }.disabled(!draft.ready || draft.loading || draft.saving || draft.conflict)
                     }
+                    if orderID != nil {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button {
+                                Task {
+                                    generatingPDF = true
+                                    defer { generatingPDF = false }
+                                    do {
+                                        let data = try await auth.orderRequest("api/os/" + orderID!)
+                                        let envelope = try JSONDecoder().decode(OrderJSON.self, from: data).object
+                                        if let os = envelope["os"]?.object {
+                                            let url = try OrderPDFGenerator.generate(order: os)
+                                            pdfShareItem = PDFShareItem(url: url)
+                                        }
+                                    } catch { }
+                                }
+                            } label: {
+                                Image(systemName: "printer.fill").foregroundStyle(.blue)
+                            }.disabled(generatingPDF).accessibilityLabel("Imprimir / Salvar PDF")
+                        }
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button { showingWhatsApp = true } label: {
+                                Image(systemName: "message.fill").foregroundStyle(.green)
+                            }.accessibilityLabel("Enviar WhatsApp")
+                        }
+                    }
                 }
                 .interactiveDismissDisabled()
-                .task { await draft.load(auth: auth, id: orderID) }
+                .task {
+                    if let prefillQuote, orderID == nil {
+                        draft.prefillFromQuote(prefillQuote)
+                    } else if let prefillClient, orderID == nil {
+                        draft.prefillFromClient(prefillClient)
+                    } else {
+                        await draft.load(auth: auth, id: orderID)
+                    }
+                }
                 .sheet(isPresented: $choosingClient) {
-                    OrderRecordPicker(auth: auth, entity: "clientes", title: "Selecionar cliente") { draft.selectClient($0) }
+                    ClientPickerSheet(auth: auth) { client in
+                        draft.prefillFromClient(client.raw)
+                    }
                 }
                 .sheet(isPresented: $choosingProduct) {
                     OrderRecordPicker(auth: auth, entity: "produtos", title: "Selecionar produto") { product in
@@ -264,6 +376,14 @@ struct OrderEditor: View {
                         let digits = priceText.filter { $0.isNumber || $0 == "," || $0 == "." }.replacingOccurrences(of: ".", with: "").replacingOccurrences(of: ",", with: ".")
                         draft.parts.append(OrderPart(description: product.title, price: digits, productID: product.id))
                     }
+                }
+                .sheet(isPresented: $showingWhatsApp) {
+                    if let orderID {
+                        WhatsAppSheet(auth: auth, orderID: orderID, initialPhone: draft.clientPhone, initialClientName: draft.clientName, orderTitle: "OS")
+                    }
+                }
+                .sheet(item: $pdfShareItem) { item in
+                    ShareSheetView(activityItems: [item.url])
                 }
                 .confirmationDialog("Descartar alterações?", isPresented: $confirmCancel, titleVisibility: .visible) { Button("Descartar", role: .destructive) { dismiss() } }
                 .confirmationDialog("Salvar como \(draft.status)?", isPresented: $confirmFinish, titleVisibility: .visible) {
