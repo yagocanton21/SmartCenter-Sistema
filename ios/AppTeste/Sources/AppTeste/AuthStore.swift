@@ -191,8 +191,8 @@ final class AuthStore: ObservableObject {
         return try JSONDecoder().decode(MobileRecordPage.self, from: data)
     }
 
-    func orderRequest(_ path: String, body: Data? = nil, idempotencyKey: String? = nil) async throws -> Data {
-        guard let baseURL, user?.can("os") == true else { throw URLError(.userAuthenticationRequired) }
+    func orderRequest(_ path: String, body: Data? = nil, idempotencyKey: String? = nil, permission: String = "os") async throws -> Data {
+        guard let baseURL, user?.can(permission) == true else { throw URLError(.userAuthenticationRequired) }
         var request = URLRequest(url: baseURL.appendingPathComponent(path))
         request.httpMethod = body == nil ? "GET" : "POST"
         request.timeoutInterval = 25
@@ -211,7 +211,7 @@ final class AuthStore: ObservableObject {
             error = "Sua sessão expirou. Entre novamente."
         }
         guard (200..<300).contains(status) else {
-            let message = (try? JSONDecoder().decode(APIError.self, from: data).error) ?? "Não foi possível acessar a OS (\(status))."
+            let message = (try? JSONDecoder().decode(APIError.self, from: data).error) ?? "Não foi possível acessar o registro (\(status))."
             throw NSError(domain: "Smartcenter", code: status, userInfo: [NSLocalizedDescriptionKey: message])
         }
         return data

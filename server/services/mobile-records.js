@@ -54,6 +54,8 @@ function list(user, entity, params) {
     } else if (entity === 'clientes') {
       title = r.nome; subtitle = r.telefone || '';
       add('Nome', r.nome); add('Telefone', r.telefone); add('E-mail', r.email);
+      add('WhatsApp', r.whatsapp); add('CPF / CNPJ', r.doc); add('CEP', r.cep);
+      add('Cidade', r.cidade); add('Endereço', r.endereco); add('Observações', r.obs);
     } else {
       title = r.nome; subtitle = r.codigo || ''; badge = money(r.preco);
       add('Nome', r.nome); add('Código', r.codigo); add('Preço', badge);

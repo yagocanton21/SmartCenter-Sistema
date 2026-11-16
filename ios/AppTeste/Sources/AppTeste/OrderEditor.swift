@@ -284,6 +284,8 @@ private struct OrderRecordPicker: View {
     let choose: (MobileRecord) -> Void
     @StateObject private var store = RecordsStore()
     @State private var query = ""
+    @State private var creatingClient = false
+    @State private var savedClient: MobileRecord?
     @Environment(\.dismiss) private var dismiss
     var body: some View {
         NavigationStack {
@@ -301,7 +303,17 @@ private struct OrderRecordPicker: View {
                 if store.items.isEmpty && !store.loading && store.error == nil { Text("Nenhum registro encontrado.").foregroundStyle(.secondary) }
             }.font(.system(size: 14)).navigationTitle(title).navigationBarTitleDisplayMode(.inline)
                 .searchable(text: $query, prompt: "Buscar")
-                .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancelar") { dismiss() } } }
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) { Button("Cancelar") { dismiss() } }
+                    if entity == "clientes" {
+                        ToolbarItem(placement: .confirmationAction) { Button("Novo", systemImage: "plus") { creatingClient = true } }
+                    }
+                }
+                .sheet(isPresented: $creatingClient, onDismiss: {
+                    if let savedClient { choose(savedClient); dismiss() }
+                }) {
+                    ClientEditor(auth: auth, clientID: nil) { savedClient = $0 }
+                }
                 .safeAreaInset(edge: .bottom) {
                     HStack {
                         Button("Anterior") { load(store.currentPage - 1) }.disabled(store.loading || store.currentPage <= 1)

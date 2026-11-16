@@ -81,7 +81,7 @@ struct RecordsView: View {
 
                 ForEach(store.items) { row in
                     NavigationLink {
-                        RecordDetailView(row: row, icon: page.icon, auth: auth, isOrder: page == .os) { refreshID += 1; Task { await auth.loadDashboard() } }
+                        RecordDetailView(row: row, icon: page.icon, auth: auth, isOrder: page == .os, isClient: page == .clientes) { refreshID += 1; Task { await auth.loadDashboard() } }
                     } label: {
                         HStack(spacing: 10) {
                             Image(systemName: page.icon).font(.system(size: 14, weight: .medium))
@@ -115,14 +115,18 @@ struct RecordsView: View {
             .environment(\.defaultMinListRowHeight, 44)
             .navigationTitle(page.title).navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                if page == .os {
+                if page == .os || page == .clientes {
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button { creating = true } label: { Image(systemName: "plus") }.accessibilityLabel("Nova ordem de serviço")
+                        Button { creating = true } label: { Image(systemName: "plus") }.accessibilityLabel(page == .os ? "Nova ordem de serviço" : "Novo cliente")
                     }
                 }
             }
             .sheet(isPresented: $creating) {
-                OrderEditor(auth: auth, orderID: nil) { refreshID += 1; Task { await auth.loadDashboard() } }
+                if page == .clientes {
+                    ClientEditor(auth: auth, clientID: nil) { _ in refreshID += 1; Task { await auth.loadDashboard() } }
+                } else {
+                    OrderEditor(auth: auth, orderID: nil) { refreshID += 1; Task { await auth.loadDashboard() } }
+                }
             }
             .searchable(text: $search, placement: .navigationBarDrawer(displayMode: .always), prompt: "Buscar")
             .safeAreaInset(edge: .bottom, spacing: 0) { pagination }
@@ -167,6 +171,7 @@ private struct RecordDetailView: View {
     let icon: String
     @ObservedObject var auth: AuthStore
     let isOrder: Bool
+    let isClient: Bool
     let onSaved: () -> Void
     @State private var editing = false
     @State private var saved = false
@@ -188,10 +193,14 @@ private struct RecordDetailView: View {
         }.listStyle(.insetGrouped).environment(\.defaultMinListRowHeight, 40)
             .navigationTitle("Detalhes").navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                if isOrder { ToolbarItem(placement: .topBarTrailing) { Button("Editar") { editing = true } } }
+                if isOrder || isClient { ToolbarItem(placement: .topBarTrailing) { Button("Editar") { editing = true } } }
             }
             .sheet(isPresented: $editing, onDismiss: { if saved { onSaved(); dismiss() } }) {
-                OrderEditor(auth: auth, orderID: row.id) { saved = true }
+                if isClient {
+                    ClientEditor(auth: auth, clientID: row.id) { _ in saved = true }
+                } else {
+                    OrderEditor(auth: auth, orderID: row.id) { saved = true }
+                }
             }
     }
 }

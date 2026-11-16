@@ -145,11 +145,11 @@ async function handleApiRequest(req, res, pathname) {
       return sendJSON(res, 201, { ok: true });
     }
     const entity = pathname.split('/')[2];
-    if (req.method === 'GET' && /^\/api\/os\/[^/]+$/.test(pathname)) {
-      auth.requirePermission(user, 'os');
-      const order = models.OS.getById(pathname.split('/')[3]);
-      if (!order) auth.fail('Ordem de serviço não encontrada.', 404);
-      return sendJSON(res, 200, { os: order });
+    if (req.method === 'GET' && /^\/api\/(os|clientes)\/[^/]+$/.test(pathname)) {
+      auth.requirePermission(user, entity);
+      const value = (entity === 'os' ? models.OS : models.Cliente).getById(pathname.split('/')[3]);
+      if (!value) auth.fail(entity === 'os' ? 'Ordem de serviço não encontrada.' : 'Cliente não encontrado.', 404);
+      return sendJSON(res, 200, { [entity === 'os' ? 'os' : 'cliente']: value });
     }
     if (['clientes','produtos','os','orcamentos','vendas'].includes(entity) && pathname === '/api/' + entity && req.method === 'GET') {
       auth.requirePermission(user, entity);

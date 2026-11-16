@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "node test/concurrency.test.js && node test/idempotency.test.js && node test/security.test.js && node test/pagination.test.js && node test/order-mobile.test.js && node test/migration.test.js && node test/frontend.test.js",
+    "test": "node test/concurrency.test.js && node test/idempotency.test.js && node test/security.test.js && node test/pagination.test.js && node test/order-mobile.test.js && node test/client-mobile.test.js && node test/migration.test.js && node test/frontend.test.js",
     "backup": "node scripts/backup.js"
   },
   "engines": {
