@@ -10,20 +10,20 @@ struct DashboardView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 14) {
                 header
                 if !user.can("dashboard") {
                     ContentUnavailableView("Painel indisponível", systemImage: "lock", description: Text("Seu perfil não tem acesso ao painel."))
                 } else {
                     if let error = auth.dashboardError {
-                        VStack(alignment: .leading, spacing: 10) {
+                        VStack(alignment: .leading, spacing: 7) {
                             Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(.red)
                             Button("Tentar novamente") { Task { await auth.loadDashboard() } }.disabled(auth.loadingDashboard)
                         }.padding().background(surface, in: RoundedRectangle(cornerRadius: 16))
                     }
                     if let data = auth.dashboard {
                         HStack {
-                            Text("Visão geral").font(.title3.bold())
+                            Text("Visão geral").font(.system(size: 16, weight: .bold))
                             Spacer()
                             Text("Hoje").font(.caption.weight(.medium)).foregroundStyle(.secondary)
                         }
@@ -36,7 +36,7 @@ struct DashboardView: View {
                                             Text(status).foregroundStyle(.secondary)
                                             Spacer()
                                             Text("\(data.count([status]))").bold().monospacedDigit()
-                                        }.font(.subheadline)
+                                        }.font(.system(size: 12))
                                         GeometryReader { geometry in
                                             Capsule().fill(Color.blue.opacity(0.10))
                                                 .overlay(alignment: .leading) {
@@ -68,7 +68,7 @@ struct DashboardView: View {
                     }
                 }
                 if let error = auth.error { Text(error).foregroundStyle(.red).font(.footnote) }
-            }.padding(20).frame(maxWidth: 700).frame(maxWidth: .infinity)
+            }.padding(16).frame(maxWidth: 700).frame(maxWidth: .infinity)
         }
         .background(canvas.ignoresSafeArea())
         .navigationTitle("Smartcenter")
@@ -88,7 +88,7 @@ struct DashboardView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: 12) {
             HStack {
                 HStack(spacing: 8) {
                     Image(systemName: "square.stack.3d.up.fill")
@@ -101,15 +101,15 @@ struct DashboardView: View {
             }
             VStack(alignment: .leading, spacing: 6) {
                 Text("Olá, \(user.nome.components(separatedBy: " ").first ?? user.nome)!")
-                    .font(.system(.title, design: .rounded, weight: .bold))
-                Text("Sua assistência, em um só lugar.").font(.subheadline).foregroundStyle(.white.opacity(0.8))
+                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                Text("Sua assistência, em um só lugar.").font(.system(size: 12)).foregroundStyle(.white.opacity(0.8))
             }
             Label(Date.now.formatted(.dateTime.day().month(.wide).year().locale(Locale(identifier: "pt_BR"))), systemImage: "calendar")
                 .font(.caption).foregroundStyle(.white.opacity(0.85))
         }
-        .foregroundStyle(.white).padding(22).frame(maxWidth: .infinity, alignment: .leading)
-        .background(LinearGradient(colors: [Color(red: 0.12, green: 0.31, blue: 0.79), Color(red: 0.12, green: 0.20, blue: 0.47)], startPoint: .topLeading, endPoint: .bottomTrailing), in: RoundedRectangle(cornerRadius: 24))
-        .overlay { RoundedRectangle(cornerRadius: 24).strokeBorder(.white.opacity(0.12)) }
+        .foregroundStyle(.white).padding(16).frame(maxWidth: .infinity, alignment: .leading)
+        .background(LinearGradient(colors: [Color(red: 0.12, green: 0.31, blue: 0.79), Color(red: 0.12, green: 0.20, blue: 0.47)], startPoint: .topLeading, endPoint: .bottomTrailing), in: RoundedRectangle(cornerRadius: 18))
+        .overlay { RoundedRectangle(cornerRadius: 18).strokeBorder(.white.opacity(0.12)) }
     }
 
     private func money(_ value: Double) -> String {
@@ -141,27 +141,27 @@ struct DashboardView: View {
 
     private func card(_ title: String, value: String, icon: String, detail: String) -> some View {
         let tone: Color = icon == "clock" || icon == "doc.text" ? .orange : icon == "checkmark.circle" ? .green : icon == "chart.bar" || icon == "brazilianrealsign.circle" ? .teal : .blue
-        return VStack(alignment: .leading, spacing: 10) {
-            Image(systemName: icon).font(.system(size: 18, weight: .semibold)).foregroundStyle(tone)
-                .frame(width: 36, height: 36).background(tone.opacity(0.12), in: RoundedRectangle(cornerRadius: 11))
+        return VStack(alignment: .leading, spacing: 7) {
+            Image(systemName: icon).font(.system(size: 14, weight: .semibold)).foregroundStyle(tone)
+                .frame(width: 28, height: 28).background(tone.opacity(0.12), in: RoundedRectangle(cornerRadius: 11))
             Text(title).font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-            Text(value).font(.system(size: 25, weight: .bold, design: .rounded)).monospacedDigit()
+            Text(value).font(.system(size: 22, weight: .bold, design: .rounded)).monospacedDigit()
                 .minimumScaleFactor(0.55).lineLimit(1)
             Text(detail).font(.system(size: 11)).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-        }.frame(maxWidth: .infinity, minHeight: 145, alignment: .topLeading)
-            .padding(16).background(surface, in: RoundedRectangle(cornerRadius: 20))
-            .overlay { RoundedRectangle(cornerRadius: 20).strokeBorder(Color.primary.opacity(0.06)) }
+        }.frame(maxWidth: .infinity, minHeight: 108, alignment: .topLeading)
+            .padding(12).background(surface, in: RoundedRectangle(cornerRadius: 14))
+            .overlay { RoundedRectangle(cornerRadius: 14).strokeBorder(Color.primary.opacity(0.06)) }
             .shadow(color: .black.opacity(colorScheme == .dark ? 0.10 : 0.035), radius: 10, y: 4)
     }
 
     private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text(title).font(.headline)
+            Text(title).font(.system(size: 14, weight: .semibold))
             content()
-        }.frame(maxWidth: .infinity, alignment: .leading).padding(20)
-            .background(surface, in: RoundedRectangle(cornerRadius: 20))
-            .overlay { RoundedRectangle(cornerRadius: 20).strokeBorder(Color.primary.opacity(0.06)) }
+        }.frame(maxWidth: .infinity, alignment: .leading).padding(14)
+            .background(surface, in: RoundedRectangle(cornerRadius: 14))
+            .overlay { RoundedRectangle(cornerRadius: 14).strokeBorder(Color.primary.opacity(0.06)) }
     }
 }

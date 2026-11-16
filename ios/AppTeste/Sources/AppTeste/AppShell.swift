@@ -59,12 +59,12 @@ struct AppShell: View {
     private func closeMenu() { withAnimation(.easeInOut(duration: 0.22)) { menuOpen = false } }
 
     private var sidebar: some View {
-        VStack(alignment: .leading, spacing: 24) {
+        VStack(alignment: .leading, spacing: 18) {
             HStack(spacing: 12) {
                 Text("SC").font(.title3.bold()).foregroundStyle(.white)
-                    .frame(width: 48, height: 48).background(.blue.gradient, in: RoundedRectangle(cornerRadius: 15))
+                    .frame(width: 38, height: 38).background(.blue.gradient, in: RoundedRectangle(cornerRadius: 15))
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Smartcenter").font(.headline)
+                    Text("Smartcenter").font(.system(size: 16, weight: .semibold))
                     Text("Assistência técnica").font(.caption).foregroundStyle(.secondary)
                 }
             }
@@ -77,10 +77,10 @@ struct AppShell: View {
                         } label: {
                             HStack(spacing: 14) {
                                 Image(systemName: item.icon).frame(width: 24)
-                                Text(item.title).font(.subheadline.weight(.semibold))
+                                Text(item.title).font(.system(size: 14, weight: .medium))
                                 Spacer()
                                 if page == item { Circle().fill(.blue).frame(width: 6, height: 6) }
-                            }.padding(14).foregroundStyle(page == item ? Color.blue : Color.primary)
+                            }.padding(11).foregroundStyle(page == item ? Color.blue : Color.primary)
                                 .background(page == item ? Color.blue.opacity(0.12) : .clear, in: RoundedRectangle(cornerRadius: 13))
                         }.buttonStyle(.plain)
                     }
@@ -94,7 +94,7 @@ struct AppShell: View {
             Button(role: .destructive) { Task { await auth.logout() } } label: {
                 Label("Sair da conta", systemImage: "rectangle.portrait.and.arrow.right")
             }.disabled(auth.busy || auth.loadingDashboard)
-        }.padding(22).frame(maxWidth: 310, maxHeight: .infinity, alignment: .topLeading)
+        }.padding(18).frame(maxWidth: 280, maxHeight: .infinity, alignment: .topLeading)
             .background(Color(uiColor: .systemGroupedBackground)).shadow(radius: 20)
             .accessibilityAction(.escape) { closeMenu() }
     }

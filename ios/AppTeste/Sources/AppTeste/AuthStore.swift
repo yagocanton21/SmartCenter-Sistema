@@ -22,6 +22,8 @@ private struct APIError: Decodable { let error: String }
 final class AuthStore: ObservableObject {
     @Published private(set) var user: LoginUser?
     @Published private(set) var busy = false
+    @Published private(set) var restoring = true
+    private var restored = false
     @Published var error: String?
     @Published private(set) var dashboard: DashboardData?
     @Published private(set) var loadingDashboard = false
@@ -29,7 +31,7 @@ final class AuthStore: ObservableObject {
     @Published private(set) var updatedAt: Date?
     private var csrf = ""
     private var baseURL: URL?
-    // Cookies live only for this app session; passwords are never persisted.
+    // Optional persistent cookie lives in Keychain, never in UserDefaults.
     private let session = URLSession(configuration: .ephemeral)
 
     private func request(_ path: String, base: URL, body: [String: String]? = nil, token: String? = nil) async throws -> Data {
@@ -50,7 +52,7 @@ final class AuthStore: ObservableObject {
         return data
     }
 
-    func login(server: String, username: String, password: String) async {
+    func login(server: String, username: String, password: String, remember: Bool) async {
         guard !busy else { return }
         error = nil
         guard let url = URL(string: server.trimmingCharacters(in: .whitespacesAndNewlines)),
@@ -64,6 +66,7 @@ final class AuthStore: ObservableObject {
         busy = true
         defer { busy = false }
         do {
+            try SessionVault.clear()
             let data = try await request("api/auth/login", base: url, body: ["login": username.trimmingCharacters(in: .whitespacesAndNewlines), "password": password])
             let result = try JSONDecoder().decode(LoginSession.self, from: data)
             baseURL = url
@@ -72,7 +75,41 @@ final class AuthStore: ObservableObject {
             dashboard = nil
             dashboardError = nil
             updatedAt = nil
+            if remember {
+                do {
+                    guard let cookie = session.configuration.httpCookieStorage?.cookies(for: url)?.first(where: { $0.name == "sc_session" }), let expires = cookie.expiresDate else {
+                        throw URLError(.cannotParseResponse)
+                    }
+                    try SessionVault.save(SavedSession(server: url.absoluteString, token: cookie.value, expires: expires, secure: cookie.isSecure))
+                } catch { self.error = "Login realizado, mas não foi possível manter a sessão salva neste iPhone." }
+            }
         } catch { self.error = message(for: error) }
+    }
+
+    func restoreSession(server: String, enabled: Bool) async {
+        guard !restored else { return }
+        restored = true
+        defer { restoring = false }
+        do {
+            guard enabled else { try SessionVault.clear(); return }
+            guard let saved = try SessionVault.load() else { return }
+            guard saved.expires > Date(), saved.server == server.trimmingCharacters(in: .whitespacesAndNewlines),
+                  let url = URL(string: saved.server), let host = url.host,
+                  ["http", "https"].contains(url.scheme ?? "") else { try SessionVault.clear(); return }
+            var properties: [HTTPCookiePropertyKey: Any] = [.name: "sc_session", .value: saved.token, .domain: host, .path: "/", .expires: saved.expires]
+            if saved.secure { properties[.secure] = "TRUE" }
+            guard let cookie = HTTPCookie(properties: properties) else { try SessionVault.clear(); return }
+            session.configuration.httpCookieStorage?.setCookie(cookie)
+            let data = try await request("api/auth/session", base: url)
+            let result = try JSONDecoder().decode(LoginSession.self, from: data)
+            baseURL = url; csrf = result.csrf; user = result.user
+        } catch {
+            if (error as NSError).domain == "Smartcenter", (error as NSError).code == 401 {
+                try? SessionVault.clear()
+                self.error = "Sua sessão expirou. Entre novamente."
+            } else { self.error = message(for: error) }
+            session.configuration.httpCookieStorage?.cookies?.forEach { session.configuration.httpCookieStorage?.deleteCookie($0) }
+        }
     }
 
     func logout() async {
@@ -81,6 +118,7 @@ final class AuthStore: ObservableObject {
         error = nil
         defer { busy = false }
         do {
+            try SessionVault.clear()
             _ = try await request("api/auth/logout", base: baseURL, body: [:], token: csrf)
             user = nil
             csrf = ""
@@ -93,6 +131,7 @@ final class AuthStore: ObservableObject {
         } catch {
             if (error as NSError).domain == "Smartcenter", (error as NSError).code == 401 {
                 user = nil
+                try? SessionVault.clear()
                 csrf = ""
                 self.baseURL = nil
                 dashboard = nil
@@ -116,6 +155,7 @@ final class AuthStore: ObservableObject {
             guard user?.id == currentUser.id else { return }
             if (error as NSError).domain == "Smartcenter", (error as NSError).code == 401 {
                 user = nil
+                try? SessionVault.clear()
                 csrf = ""
                 self.baseURL = nil
                 dashboard = nil
@@ -128,7 +168,7 @@ final class AuthStore: ObservableObject {
     func recordPage(entity: String, page: Int, query: String, status: String) async throws -> MobileRecordPage {
         guard let baseURL, user != nil else { throw URLError(.userAuthenticationRequired) }
         var components = URLComponents()
-        components.queryItems = [URLQueryItem(name: "page", value: String(page)), URLQueryItem(name: "pageSize", value: "30"), URLQueryItem(name: "q", value: query)]
+        components.queryItems = [URLQueryItem(name: "page", value: String(page)), URLQueryItem(name: "pageSize", value: "10"), URLQueryItem(name: "q", value: query)]
         if status != "Todos" { components.queryItems?.append(URLQueryItem(name: "status", value: status)) }
         // URLRequest's path helper cannot contain a query string.
         let url = baseURL.appendingPathComponent("api/mobile/records/" + entity)
@@ -140,6 +180,7 @@ final class AuthStore: ObservableObject {
         let (data, response) = try await session.data(for: request)
         let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
         if statusCode == 401 {
+            try? SessionVault.clear()
             user = nil; csrf = ""; self.baseURL = nil; dashboard = nil; updatedAt = nil
             error = "Sua sessão expirou. Entre novamente."
         }
@@ -148,6 +189,32 @@ final class AuthStore: ObservableObject {
             throw NSError(domain: "Smartcenter", code: statusCode, userInfo: [NSLocalizedDescriptionKey: message])
         }
         return try JSONDecoder().decode(MobileRecordPage.self, from: data)
+    }
+
+    func orderRequest(_ path: String, body: Data? = nil, idempotencyKey: String? = nil) async throws -> Data {
+        guard let baseURL, user?.can("os") == true else { throw URLError(.userAuthenticationRequired) }
+        var request = URLRequest(url: baseURL.appendingPathComponent(path))
+        request.httpMethod = body == nil ? "GET" : "POST"
+        request.timeoutInterval = 25
+        request.cachePolicy = .reloadIgnoringLocalCacheData
+        if let body {
+            request.httpBody = body
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.setValue(csrf, forHTTPHeaderField: "X-CSRF-Token")
+            request.setValue(idempotencyKey, forHTTPHeaderField: "Idempotency-Key")
+        }
+        let (data, response) = try await session.data(for: request)
+        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        if status == 401 {
+            try? SessionVault.clear()
+            user = nil; csrf = ""; self.baseURL = nil; dashboard = nil
+            error = "Sua sessão expirou. Entre novamente."
+        }
+        guard (200..<300).contains(status) else {
+            let message = (try? JSONDecoder().decode(APIError.self, from: data).error) ?? "Não foi possível acessar a OS (\(status))."
+            throw NSError(domain: "Smartcenter", code: status, userInfo: [NSLocalizedDescriptionKey: message])
+        }
+        return data
     }
 
     private func message(for error: Error) -> String {

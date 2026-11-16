@@ -145,6 +145,12 @@ async function handleApiRequest(req, res, pathname) {
       return sendJSON(res, 201, { ok: true });
     }
     const entity = pathname.split('/')[2];
+    if (req.method === 'GET' && /^\/api\/os\/[^/]+$/.test(pathname)) {
+      auth.requirePermission(user, 'os');
+      const order = models.OS.getById(pathname.split('/')[3]);
+      if (!order) auth.fail('Ordem de serviço não encontrada.', 404);
+      return sendJSON(res, 200, { os: order });
+    }
     if (['clientes','produtos','os','orcamentos','vendas'].includes(entity) && pathname === '/api/' + entity && req.method === 'GET') {
       auth.requirePermission(user, entity);
       const url = new URL(req.url, 'http://localhost'), offset = Math.max(0, parseInt(url.searchParams.get('offset')) || 0), limit = Math.min(200, Math.max(1, parseInt(url.searchParams.get('limit')) || 50));
