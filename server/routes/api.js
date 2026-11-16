@@ -92,6 +92,10 @@ async function handleApiRequest(req, res, pathname) {
       return sendJSON(res, 200, { ok: true, user: auth.publicUser(session.user) });
     }
     const user = session.user, db = getDatabase();
+    if (req.method === 'GET' && pathname.startsWith('/api/mobile/records/')) {
+      const entity = pathname.slice('/api/mobile/records/'.length);
+      return sendJSON(res, 200, require('../services/mobile-records').list(user, entity, new URL(req.url, 'http://localhost').searchParams));
+    }
     if (pathname === '/api/db' && req.method === 'GET') return sendJSON(res, 200, changesService.snapshot(user));
     if (pathname === '/api/changes' && req.method === 'POST') {
       const { body, rawBody } = await readBody(req);
